@@ -2,6 +2,10 @@
 
 PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework.
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/mrpunyapal/peststan.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/peststan)
+[![Total Downloads on Packagist](https://img.shields.io/packagist/dt/mrpunyapal/peststan.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/peststan)
+[![CI](https://github.com/mrpunyapal/peststan/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mrpunyapal/peststan/actions/workflows/ci.yml)
+
 ## Installation
 
 ```bash
