@@ -145,7 +145,7 @@ class Expectation
     }
 
     /**
-     * @return Expectation<array>
+     * @return Expectation<array<array-key, mixed>>
      */
     public function toBeArray(): Expectation
     {
@@ -173,7 +173,7 @@ class Expectation
     }
 
     /**
-     * @return Expectation<iterable>
+     * @return Expectation<iterable<array-key, mixed>>
      */
     public function toBeIterable(): Expectation
     {
@@ -311,15 +311,15 @@ class Expectation
     }
 
     /**
-     * @param mixed $expected
-     * @return Expectation<TValue>
+     * @param mixed ...$args
+     * @return never
      */
     public function dd(mixed ...$args): never
     {
     }
 
     /**
-     * @param mixed $expected
+     * @param mixed ...$args
      * @return Expectation<TValue>
      */
     public function dump(mixed ...$args): Expectation
@@ -335,6 +335,7 @@ class Expectation
     }
 
     /**
+     * @param callable ...$callbacks
      * @return Expectation<TValue>
      */
     public function sequence(callable ...$callbacks): Expectation
@@ -366,7 +367,7 @@ class TestCall
     }
 
     /**
-     * @param Closure $closure
+     * @param Closure|string|bool $condition
      * @return TestCall
      */
     public function skip(Closure|string|bool $condition = true, string $message = ''): TestCall
@@ -388,7 +389,7 @@ class TestCall
     }
 
     /**
-     * @param Closure(mixed...): void $closure
+     * @param string ...$tests
      * @return TestCall
      */
     public function depends(string ...$tests): TestCall
@@ -396,9 +397,11 @@ class TestCall
     }
 
     /**
+     * @param class-string<\Throwable> $exception
+     * @param string|null $exceptionMessage
      * @return TestCall
      */
-    public function throws(string $exception, string $exceptionMessage = null): TestCall
+    public function throws(string $exception, ?string $exceptionMessage = null): TestCall
     {
     }
 }

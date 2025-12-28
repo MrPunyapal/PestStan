@@ -9,8 +9,11 @@
         "phpstan/phpstan": "^2.0"
     },
     "require-dev": {
+        "laravel/pint": "^1.18",
         "pestphp/pest": "^2.0 || ^3.0",
-        "phpstan/phpstan-strict-rules": "^2.0"
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "rector/rector": "^2.0"
     },
     "autoload": {
         "psr-4": {
@@ -32,8 +35,27 @@
     "config": {
         "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        },
+        "platform-check": false
+    },
+    "scripts": {
+        "lint": [
+            "rector",
+            "pint"
+        ],
+        "test:lint": [
+            "rector --dry-run",
+            "pint --test"
+        ],
+        "test:types": "phpstan analyse --ansi",
+        "test:unit": "pest",
+        "test": [
+            "@test:lint",
+            "@test:types",
+            "@test:unit"
+        ]
     },
     "minimum-stability": "stable",
     "prefer-stable": true

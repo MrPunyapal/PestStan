@@ -1,0 +1,17 @@
+{
+    "preset": "psr12",
+    "exclude": [
+        "vendor"
+    ],
+    "rules": {
+        "concat_space": {
+            "spacing": "one"
+        },
+        "declare_strict_types": true,
+        "method_chaining_indentation": true,
+        "no_unused_imports": true,
+        "ordered_imports": {
+            "sort_algorithm": "alpha"
+        }
+    }
+}

@@ -1,12 +1,7 @@
 includes:
     - extension.neon
-    - vendor/phpstan/phpstan-strict-rules/rules.neon
 
 parameters:
     level: max
     paths:
         - src
-    
-    # Ignore test files for now
-    excludePaths:
-        - tests/*

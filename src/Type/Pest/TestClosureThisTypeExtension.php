@@ -7,21 +7,20 @@ namespace PestStan\Type\Pest;
 use PhpParser\Node\Expr\FuncCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\FunctionReflection;
-use PHPStan\Type\ClosureType;
-use PHPStan\Type\Constant\ConstantStringType;
-use PHPStan\Type\DynamicFunctionThisTypeExtension;
+use PHPStan\Reflection\ParameterReflection;
+use PHPStan\Type\FunctionParameterClosureThisExtension;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Determines the $this type for closures passed to Pest test functions.
- * 
+ *
  * When a closure is passed to it(), test(), beforeEach(), etc., the closure
  * is bound to a TestCase instance at runtime. This extension helps PHPStan
  * understand that $this inside these closures refers to the TestCase.
  */
-final class TestClosureThisTypeExtension implements DynamicFunctionThisTypeExtension
+final class TestClosureThisTypeExtension implements FunctionParameterClosureThisExtension
 {
     private const PEST_TEST_FUNCTIONS = [
         'Pest\it',
@@ -35,33 +34,20 @@ final class TestClosureThisTypeExtension implements DynamicFunctionThisTypeExten
         'Pest\afterAll',
     ];
 
-    public function isFunctionSupported(FunctionReflection $functionReflection): bool
+    public function isFunctionSupported(FunctionReflection $functionReflection, ParameterReflection $parameter): bool
     {
         $functionName = $functionReflection->getName();
-        
+
         return in_array($functionName, self::PEST_TEST_FUNCTIONS, true)
             || in_array($functionName, self::PEST_HOOK_FUNCTIONS, true);
     }
 
-    public function getThisTypeFromFunctionCall(
+    public function getClosureThisTypeFromFunctionCall(
         FunctionReflection $functionReflection,
         FuncCall $functionCall,
+        ParameterReflection $parameter,
         Scope $scope
-    ): ?Type {
-        // Get the closure argument - it's typically the last argument
-        $args = $functionCall->getArgs();
-        if (count($args) === 0) {
-            return null;
-        }
-
-        $closureArg = end($args);
-        $closureType = $scope->getType($closureArg->value);
-
-        // Only process if it's actually a closure
-        if (!$closureType instanceof ClosureType) {
-            return null;
-        }
-
+    ): Type {
         // Try to determine the TestCase class from the context
         // This would ideally parse uses() or pest()->extend() calls
         // For now, we default to PHPUnit\Framework\TestCase

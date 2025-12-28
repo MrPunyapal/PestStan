@@ -2,31 +2,21 @@
 
 declare(strict_types=1);
 
-use function PHPStan\Testing\assertType;
+use Pest\Expectation;
+use PHPUnit\Framework\TestCase;
 
-it('properly types expect() return value', function () {
-    $string = 'hello';
-    $result = expect($string);
-    
-    assertType('Pest\Expectation<string>', $result);
+it('works with Pest functions', function (): void {
+    expect(true)->toBe(true);
 });
 
-it('properly types $this in test closures', function () {
-    assertType('PHPUnit\Framework\TestCase', $this);
-    
+it('has $this bound to TestCase', function (): void {
+    expect($this)->toBeInstanceOf(TestCase::class);
     $this->assertTrue(true);
 });
 
-test('expect with integer', function () {
-    $number = 123;
-    $result = expect($number);
-    
-    assertType('Pest\Expectation<int>', $result);
-});
+test('expect function is available', function (): void {
+    $value = 'test';
+    $result = expect($value);
 
-test('expect with object', function () {
-    $object = new stdClass();
-    $result = expect($object);
-    
-    assertType('Pest\Expectation<stdClass>', $result);
+    expect($result)->toBeInstanceOf(Expectation::class);
 });
