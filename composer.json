@@ -22,7 +22,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "PestStan\\Tests\\": "tests/"
+            "Tests\\": "tests/"
         }
     },
     "extra": {

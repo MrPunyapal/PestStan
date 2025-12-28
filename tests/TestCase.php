@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PestStan\Tests;
+namespace Tests;
 
 use PHPUnit\Framework\TestCase as BaseTestCase;
 
