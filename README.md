@@ -1,0 +1,31 @@
+# PestStan
+
+PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework.
+
+## Installation
+
+```bash
+composer require --dev peststan/peststan
+```
+
+If you have [phpstan/extension-installer](https://github.com/phpstan/extension-installer) installed, the extension will be automatically registered.
+
+Otherwise, you need to include the extension manually in your `phpstan.neon` or `phpstan.neon.dist`:
+
+```neon
+includes:
+    - vendor/peststan/peststan/extension.neon
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for more information.
+
+## Credits
+
+- Built for [Pest PHP](https://pestphp.com/)
+- Powered by [PHPStan](https://phpstan.org/)

@@ -1,0 +1,40 @@
+{
+    "name": "peststan/peststan",
+    "description": "PHPStan extension for Pest PHP testing framework",
+    "type": "phpstan-extension",
+    "license": "MIT",
+    "keywords": ["phpstan", "pest", "testing", "static-analysis"],
+    "require": {
+        "php": "^8.2",
+        "phpstan/phpstan": "^2.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^2.0 || ^3.0",
+        "phpstan/phpstan-strict-rules": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PestStan\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PestStan\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "phpstan": {
+            "includes": [
+                "extension.neon"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

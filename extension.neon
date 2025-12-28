@@ -1,0 +1,23 @@
+parameters:
+    stubFiles:
+        - stubs/Pest.stub
+
+conditionalTags:
+    PestStan\Type\Pest\TestClosureThisTypeExtension:
+        phpstan.broker.dynamicFunctionThisTypeExtension: %featureToggles.closureDefaultThisType%
+
+services:
+    -
+        class: PestStan\Type\Pest\ExpectFunctionDynamicReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicFunctionReturnTypeExtension
+
+    -
+        class: PestStan\Type\Pest\ExpectationTypeSpecifyingExtension
+        tags:
+            - phpstan.typeSpecifier.methodTypeSpecifyingExtension
+
+    -
+        class: PestStan\Type\Pest\TestClosureThisTypeExtension
+        tags:
+            - phpstan.broker.dynamicFunctionThisTypeExtension

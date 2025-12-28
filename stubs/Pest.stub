@@ -1,0 +1,434 @@
+<?php
+
+namespace Pest;
+
+use Closure;
+use Pest\PendingCalls\TestCall;
+use Pest\Support\HigherOrderTapProxy;
+use Pest\Expectation;
+
+/**
+ * @template TValue
+ * @param TValue $value
+ * @return Expectation<TValue>
+ */
+function expect(mixed $value): Expectation
+{
+}
+
+/**
+ * @param string $description
+ * @param Closure|null $closure
+ * @return TestCall
+ */
+function it(string $description, ?Closure $closure = null): TestCall
+{
+}
+
+/**
+ * @param string $description
+ * @param Closure|null $closure
+ * @return TestCall
+ */
+function test(string $description, ?Closure $closure = null): TestCall
+{
+}
+
+/**
+ * @param string $description
+ * @param Closure|null $closure
+ * @return HigherOrderTapProxy
+ */
+function describe(string $description, ?Closure $closure = null): HigherOrderTapProxy
+{
+}
+
+/**
+ * @param Closure $closure
+ * @return void
+ */
+function beforeEach(Closure $closure): void
+{
+}
+
+/**
+ * @param Closure $closure
+ * @return void
+ */
+function afterEach(Closure $closure): void
+{
+}
+
+/**
+ * @param Closure $closure
+ * @return void
+ */
+function beforeAll(Closure $closure): void
+{
+}
+
+/**
+ * @param Closure $closure
+ * @return void
+ */
+function afterAll(Closure $closure): void
+{
+}
+
+/**
+ * @template TClass as object
+ * @param class-string<TClass>|list<class-string> $classOrTraits
+ * @return HigherOrderTapProxy
+ */
+function uses(string|array $classOrTraits): HigherOrderTapProxy
+{
+}
+
+/**
+ * @param string $name
+ * @param iterable<mixed>|Closure $dataset
+ * @return void
+ */
+function dataset(string $name, iterable|Closure $dataset): void
+{
+}
+
+/**
+ * @return HigherOrderTapProxy
+ */
+function pest(): HigherOrderTapProxy
+{
+}
+
+namespace Pest;
+
+/**
+ * @template TValue
+ */
+class Expectation
+{
+    /**
+     * @template TClass as object
+     * @param class-string<TClass> $class
+     * @return Expectation<TClass>
+     */
+    public function toBeInstanceOf(string $class): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<string>
+     */
+    public function toBeString(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<int>
+     */
+    public function toBeInt(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<float>
+     */
+    public function toBeFloat(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<bool>
+     */
+    public function toBeBool(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<array>
+     */
+    public function toBeArray(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<object>
+     */
+    public function toBeObject(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<resource>
+     */
+    public function toBeResource(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<callable>
+     */
+    public function toBeCallable(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<iterable>
+     */
+    public function toBeIterable(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<numeric>
+     */
+    public function toBeNumeric(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<scalar>
+     */
+    public function toBeScalar(): Expectation
+    {
+    }
+
+    /**
+     * @param mixed $expected
+     * @return Expectation<TValue>
+     */
+    public function toBe(mixed $expected): Expectation
+    {
+    }
+
+    /**
+     * @param mixed $expected
+     * @return Expectation<TValue>
+     */
+    public function toEqual(mixed $expected): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<true>
+     */
+    public function toBeTrue(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<false>
+     */
+    public function toBeFalse(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<null>
+     */
+    public function toBeNull(): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<empty>
+     */
+    public function toBeEmpty(): Expectation
+    {
+    }
+
+    /**
+     * @param mixed $needle
+     * @return Expectation<TValue>
+     */
+    public function toContain(mixed $needle): Expectation
+    {
+    }
+
+    /**
+     * @param int|string $key
+     * @param mixed $value
+     * @return Expectation<TValue>
+     */
+    public function toHaveKey(int|string $key, mixed $value = null): Expectation
+    {
+    }
+
+    /**
+     * @param int $count
+     * @return Expectation<TValue>
+     */
+    public function toHaveCount(int $count): Expectation
+    {
+    }
+
+    /**
+     * @param string $property
+     * @param mixed $value
+     * @return Expectation<TValue>
+     */
+    public function toHaveProperty(string $property, mixed $value = null): Expectation
+    {
+    }
+
+    /**
+     * @param string $method
+     * @return Expectation<TValue>
+     */
+    public function toHaveMethod(string $method): Expectation
+    {
+    }
+
+    /**
+     * @param mixed $value
+     * @return Expectation<TValue>
+     */
+    public function toMatchArray(mixed $value): Expectation
+    {
+    }
+
+    /**
+     * @param string $pattern
+     * @return Expectation<TValue>
+     */
+    public function toMatch(string $pattern): Expectation
+    {
+    }
+
+    /**
+     * @param mixed ...$args
+     * @return Expectation<TValue>
+     */
+    public function and(mixed ...$args): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<TValue>
+     */
+    public function not(): Expectation
+    {
+    }
+
+    /**
+     * @param mixed $expected
+     * @return Expectation<TValue>
+     */
+    public function dd(mixed ...$args): never
+    {
+    }
+
+    /**
+     * @param mixed $expected
+     * @return Expectation<TValue>
+     */
+    public function dump(mixed ...$args): Expectation
+    {
+    }
+
+    /**
+     * @param non-empty-string $message
+     * @return Expectation<TValue>
+     */
+    public function json(string $message = ''): Expectation
+    {
+    }
+
+    /**
+     * @return Expectation<TValue>
+     */
+    public function sequence(callable ...$callbacks): Expectation
+    {
+    }
+}
+
+namespace Pest\PendingCalls;
+
+use Closure;
+
+class TestCall
+{
+    /**
+     * @param array<array-key, mixed>|string $datasetsOrDescription
+     * @param array<array-key, mixed> ...$datasets
+     * @return TestCall
+     */
+    public function with(array|string $datasetsOrDescription, array ...$datasets): TestCall
+    {
+    }
+
+    /**
+     * @param string ...$groups
+     * @return TestCall
+     */
+    public function group(string ...$groups): TestCall
+    {
+    }
+
+    /**
+     * @param Closure $closure
+     * @return TestCall
+     */
+    public function skip(Closure|string|bool $condition = true, string $message = ''): TestCall
+    {
+    }
+
+    /**
+     * @return TestCall
+     */
+    public function only(): TestCall
+    {
+    }
+
+    /**
+     * @return TestCall
+     */
+    public function todo(string $message = ''): TestCall
+    {
+    }
+
+    /**
+     * @param Closure(mixed...): void $closure
+     * @return TestCall
+     */
+    public function depends(string ...$tests): TestCall
+    {
+    }
+
+    /**
+     * @return TestCall
+     */
+    public function throws(string $exception, string $exceptionMessage = null): TestCall
+    {
+    }
+}
+
+namespace Pest\Support;
+
+class HigherOrderTapProxy
+{
+    /**
+     * @param string ...$groups
+     * @return HigherOrderTapProxy
+     */
+    public function group(string ...$groups): HigherOrderTapProxy
+    {
+    }
+
+    /**
+     * @param string ...$directories
+     * @return HigherOrderTapProxy
+     */
+    public function in(string ...$directories): HigherOrderTapProxy
+    {
+    }
+
+    /**
+     * @template TClass as object
+     * @param class-string<TClass> $class
+     * @return HigherOrderTapProxy
+     */
+    public function extend(string $class): HigherOrderTapProxy
+    {
+    }
+}
