@@ -9,7 +9,7 @@ PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework.
 ## Installation
 
 ```bash
-composer require --dev peststan/peststan
+composer require --dev mrpunyapal/peststan
 ```
 
 If you have [phpstan/extension-installer](https://github.com/phpstan/extension-installer) installed, the extension will be automatically registered.
@@ -18,7 +18,7 @@ Otherwise, you need to include the extension manually in your `phpstan.neon` or 
 
 ```neon
 includes:
-    - vendor/peststan/peststan/extension.neon
+    - vendor/mrpunyapal/peststan/extension.neon
 ```
 
 ## Contributing
