@@ -9,13 +9,13 @@ services:
             - phpstan.broker.dynamicFunctionReturnTypeExtension
 
     # TODO: Enable when PHPStan supports type narrowing for fluent assertion chains
-    # Currently, MethodTypeSpecifyingExtension cannot narrow the original variable
-    # passed to expect() - it only works for conditional type narrowing.
     # -
     #     class: PestStan\Type\Pest\ExpectationTypeSpecifyingExtension
     #     tags:
     #         - phpstan.typeSpecifier.methodTypeSpecifyingExtension
 
+    # Extension that determines $this type in test closures
+    # Parses uses() and pest()->extend() calls directly from file AST
     -
         class: PestStan\Type\Pest\TestClosureThisTypeExtension
         tags:

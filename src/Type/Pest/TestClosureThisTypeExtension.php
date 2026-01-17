@@ -25,6 +25,7 @@ final class TestClosureThisTypeExtension implements FunctionParameterClosureThis
     private const PEST_TEST_FUNCTIONS = [
         'Pest\it',
         'Pest\test',
+        'Pest\describe',
     ];
 
     private const PEST_HOOK_FUNCTIONS = [
@@ -48,9 +49,9 @@ final class TestClosureThisTypeExtension implements FunctionParameterClosureThis
         ParameterReflection $parameter,
         Scope $scope
     ): Type {
-        // Try to determine the TestCase class from the context
-        // This would ideally parse uses() or pest()->extend() calls
-        // For now, we default to PHPUnit\Framework\TestCase
+        // Default to PHPUnit\Framework\TestCase
+        // Custom TestCase detection via uses() or pest()->extend() would require
+        // parsing the file's AST, which is complex to do correctly.
         return new ObjectType(TestCase::class);
     }
 }

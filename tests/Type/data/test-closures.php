@@ -8,22 +8,45 @@ use function PHPStan\Testing\assertType;
 
 use PHPUnit\Framework\TestCase;
 
-function testClosures(): void
+// ============================================================================
+// Default TestCase Tests
+// ============================================================================
+
+/**
+ * Test that $this is correctly typed as TestCase in it() function.
+ */
+function testThisTypeInIt(): void
 {
-    // Test that $this is bound to TestCase in test functions
     it('has correct $this type', function (): void {
         assertType(TestCase::class, $this);
     });
+}
 
-    test('also has correct $this type', function (): void {
+/**
+ * Test that $this is correctly typed as TestCase in test() function.
+ */
+function testThisTypeInTest(): void
+{
+    test('has correct $this type', function (): void {
         assertType(TestCase::class, $this);
     });
+}
 
-    // Test hooks
+/**
+ * Test that $this is correctly typed in beforeEach() hook.
+ */
+function testThisTypeInBeforeEach(): void
+{
     beforeEach(function (): void {
         assertType(TestCase::class, $this);
     });
+}
 
+/**
+ * Test that $this is correctly typed in afterEach() hook.
+ */
+function testThisTypeInAfterEach(): void
+{
     afterEach(function (): void {
         assertType(TestCase::class, $this);
     });

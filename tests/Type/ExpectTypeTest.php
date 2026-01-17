@@ -15,3 +15,4 @@ test('type assertions', function (string $assertType, string $file, mixed ...$ar
     yield from TypeInferenceTestCase::gatherAssertTypes(__DIR__ . '/data/test-closures.php');
     yield from TypeInferenceTestCase::gatherAssertTypes(__DIR__ . '/data/expectation-methods.php');
 });
+
