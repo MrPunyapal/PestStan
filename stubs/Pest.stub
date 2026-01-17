@@ -108,8 +108,14 @@ namespace Pest;
 class Expectation
 {
     /**
+     * @var TValue
+     */
+    public mixed $value;
+
+    /**
      * @template TClass as object
      * @param class-string<TClass> $class
+     * @phpstan-assert TClass $this->value
      * @return Expectation<TClass>
      */
     public function toBeInstanceOf(string $class): Expectation
@@ -117,6 +123,7 @@ class Expectation
     }
 
     /**
+     * @phpstan-assert string $this->value
      * @return Expectation<string>
      */
     public function toBeString(): Expectation
@@ -124,6 +131,7 @@ class Expectation
     }
 
     /**
+     * @phpstan-assert int $this->value
      * @return Expectation<int>
      */
     public function toBeInt(): Expectation
@@ -131,6 +139,7 @@ class Expectation
     }
 
     /**
+     * @phpstan-assert float $this->value
      * @return Expectation<float>
      */
     public function toBeFloat(): Expectation
@@ -138,6 +147,7 @@ class Expectation
     }
 
     /**
+     * @phpstan-assert bool $this->value
      * @return Expectation<bool>
      */
     public function toBeBool(): Expectation
@@ -145,6 +155,7 @@ class Expectation
     }
 
     /**
+     * @phpstan-assert array<array-key, mixed> $this->value
      * @return Expectation<array<array-key, mixed>>
      */
     public function toBeArray(): Expectation
@@ -210,6 +221,7 @@ class Expectation
     }
 
     /**
+     * @phpstan-assert true $this->value
      * @return Expectation<true>
      */
     public function toBeTrue(): Expectation
@@ -217,6 +229,7 @@ class Expectation
     }
 
     /**
+     * @phpstan-assert false $this->value
      * @return Expectation<false>
      */
     public function toBeFalse(): Expectation
@@ -224,6 +237,7 @@ class Expectation
     }
 
     /**
+     * @phpstan-assert null $this->value
      * @return Expectation<null>
      */
     public function toBeNull(): Expectation
