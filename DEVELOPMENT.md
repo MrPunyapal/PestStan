@@ -8,104 +8,92 @@ composer install
 
 ## Development Commands
 
-### Run All Tests
+### Run All Checks
+
 ```bash
 composer test
 ```
 
-This command runs:
-1. Code quality checks (Rector)
-2. Code style checks (Laravel Pint)
-3. Static analysis (PHPStan)
+This runs in order:
+1. Code quality checks (Rector dry-run)
+2. Code style checks (Laravel Pint dry-run)
+3. Static analysis (PHPStan at max level)
 4. Unit tests (Pest)
 
 ### Individual Commands
 
-#### Linting & Code Quality
 ```bash
-# Run Rector (refactoring)
-composer lint
-
-# Check without applying changes
-composer test:lint
-```
-
-#### Code Formatting
-```bash
-# Format code with Laravel Pint
-vendor/bin/pint
-
-# Check formatting without applying
-vendor/bin/pint --test
-```
-
-#### Static Analysis
-```bash
-# Run PHPStan
-composer test:types
-```
-
-#### Unit Tests
-```bash
-# Run Pest tests
-composer test:unit
+composer lint          # Apply Rector + Pint fixes
+composer test:lint     # Check without applying changes
+composer test:types    # Run PHPStan
+composer test:unit     # Run Pest tests
 ```
 
 ## Project Structure
 
 ```
 PestStan/
-├── src/
-│   └── Type/
-│       └── Pest/
-│           ├── ExpectFunctionDynamicReturnTypeExtension.php
-│           ├── ExpectationTypeSpecifyingExtension.php
-│           └── TestClosureThisTypeExtension.php
-├── stubs/
-│   └── Pest.stub
+├── src/Type/Pest/
+│   ├── PestFunctionReturnTypeExtension.php            # expect/it/test/todo/describe return types
+│   ├── ExpectationMethodReturnTypeExtension.php       # Type narrowing for assertion methods
+│   └── TestClosureThisTypeExtension.php               # $this binding in closures
 ├── tests/
-│   ├── Pest.php
-│   ├── TestCase.php
+│   ├── Pest.php                                       # Pest bootstrap
+│   ├── TestCase.php                                   # Base test case
+│   ├── extension.neon                                 # Test PHPStan config
 │   └── Type/
-│       └── ExpectTypeTest.php
-├── extension.neon
+│       ├── ExpectTypeTest.php                         # Main test runner
+│       └── data/
+│           ├── expect-function.php                    # expect() return type tests
+│           ├── expectation-methods.php                # Assertion method type tests
+│           ├── test-closures.php                      # $this binding tests
+│           ├── test-call-methods.php                  # TestCall chaining tests
+│           ├── pest-functions.php                     # Pest function return type tests
+│           └── arch-expectations.php                  # Architecture testing type tests
+├── extension.neon                                     # PHPStan extension config
 ├── composer.json
 ├── phpstan.neon.dist
-├── rector.php
-└── pint.json
+├── phpunit.xml.dist
+├── pint.json
+└── rector.php
 ```
 
 ## How It Works
 
-### 1. Function Stubs
-[stubs/Pest.stub](stubs/Pest.stub) provides type information for Pest's global functions and the `Expectation` class.
+All type information is provided through PHPStan dynamic type extensions (no stubs).
 
-### 2. Type Extensions
+### 1. PestFunctionReturnTypeExtension
 
-- **ExpectFunctionDynamicReturnTypeExtension**: Makes `expect($value)` return `Expectation<typeof $value>`
-- **TestClosureThisTypeExtension**: Binds `$this` in test closures to `TestCase`
-- **ExpectationTypeSpecifyingExtension**: Provides type narrowing for expectation methods (future enhancement)
+`DynamicFunctionReturnTypeExtension` that overrides return types for Pest global functions:
 
-### 3. Configuration
-[extension.neon](extension.neon) registers all type extensions with PHPStan.
+- `expect($value)` → `Expectation<typeof $value>` (removes `|null` from Pest's phpdoc)
+- `it()` / `test()` / `todo()` → `TestCall`
+- `describe()` → `DescribeCall`
 
-## Testing
+### 2. ExpectationMethodReturnTypeExtension
 
-The package includes basic integration tests that verify:
-- Pest functions are available
-- `$this` is properly bound to `TestCase` in test closures
-- `expect()` function returns the correct type
+`DynamicMethodReturnTypeExtension` for `Pest\Expectation` that intercepts methods resolved through the `@mixin Pest\Mixins\Expectation` annotation:
 
-## Contributing
+- Type-narrowing methods (`toBeString`, `toBeInt`, etc.) return `Expectation<narrowedType>`
+- All other assertion methods preserve the caller's generic type parameter
 
-1. Make your changes
-2. Run `composer lint` to apply code quality improvements
-3. Run `composer test` to ensure everything passes
-4. Submit a pull request
+### 3. TestClosureThisTypeExtension
+
+`FunctionParameterClosureThisExtension` that binds `$this` to `PHPUnit\Framework\TestCase` in closures passed to `it()`, `test()`, `describe()`, `beforeEach()`, `afterEach()`, `beforeAll()`, and `afterAll()`.
+
+### 4. Configuration (`extension.neon`)
+
+Registers all three extensions with PHPStan. Auto-loaded via `phpstan/extension-installer` or manually included.
+
+## Testing Approach
+
+Tests use PHPStan's `TypeInferenceTestCase` to verify type assertions. Each test data file uses `assertType()` to declare expected types, and the test runner verifies PHPStan agrees.
+
+Important: The `TestCase` class overrides `getAdditionalConfigFiles()` to load `tests/extension.neon`. This must happen at class definition time (not in `beforeAll`) because PHPStan's `gatherAssertTypes()` creates its container before Pest's `beforeAll` runs.
 
 ## Code Quality Tools
 
-- **Rector**: Automated refactoring and code quality improvements
-- **Laravel Pint**: Code style fixer based on PSR-12
-- **PHPStan**: Static analysis at maximum level with strict rules
-- **Pest**: Modern testing framework
+- **Rector**: Automated refactoring for PHP 8.2
+- **Laravel Pint**: PSR-12 code style
+- **PHPStan**: Level max with strict rules
+- **Pest**: Test framework

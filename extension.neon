@@ -1,21 +1,14 @@
-parameters:
-    stubFiles:
-        - stubs/Pest.stub
-
 services:
     -
-        class: PestStan\Type\Pest\ExpectFunctionDynamicReturnTypeExtension
+        class: PestStan\Type\Pest\PestFunctionReturnTypeExtension
         tags:
             - phpstan.broker.dynamicFunctionReturnTypeExtension
 
-    # TODO: Enable when PHPStan supports type narrowing for fluent assertion chains
-    # -
-    #     class: PestStan\Type\Pest\ExpectationTypeSpecifyingExtension
-    #     tags:
-    #         - phpstan.typeSpecifier.methodTypeSpecifyingExtension
+    -
+        class: PestStan\Type\Pest\ExpectationMethodReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension
 
-    # Extension that determines $this type in test closures
-    # Parses uses() and pest()->extend() calls directly from file AST
     -
         class: PestStan\Type\Pest\TestClosureThisTypeExtension
         tags:

@@ -1,16 +1,16 @@
 # PestStan
 
-PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework.
+PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework. Provides type-safe expectations, proper `$this` binding in test closures, and accurate return types for all Pest functions.
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/mrpunyapal/peststan.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/peststan)
-[![Total Downloads on Packagist](https://img.shields.io/packagist/dt/mrpunyapal/peststan.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/peststan)
-[![CI](https://github.com/mrpunyapal/peststan/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mrpunyapal/peststan/actions/workflows/ci.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/mrpunyapal/peststan.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/peststan)
+[![CI](https://github.com/mrpunyapal/peststan/actions/workflows/ci.yml/badge.svg)](https://github.com/mrpunyapal/peststan/actions/workflows/ci.yml)
 
-## Features
+## Requirements
 
-- **Generic `expect()` function**: Type-safe expectations with `Expectation<TValue>`
-- **Test closure `$this` binding**: Proper type inference for `$this` in test closures
-- **Pest function stubs**: Complete type definitions for all Pest global functions
+- PHP ^8.2
+- PHPStan ^2.0
+- Pest PHP ^3.0 or ^4.0
 
 ## Installation
 
@@ -18,65 +18,133 @@ PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework.
 composer require --dev mrpunyapal/peststan
 ```
 
-If you have [phpstan/extension-installer](https://github.com/phpstan/extension-installer) installed, the extension will be automatically registered.
+If you have [phpstan/extension-installer](https://github.com/phpstan/extension-installer) (recommended), the extension is registered automatically.
 
-Otherwise, you need to include the extension manually in your `phpstan.neon` or `phpstan.neon.dist`:
+Otherwise, add it manually to your `phpstan.neon` or `phpstan.neon.dist`:
 
 ```neon
 includes:
     - vendor/mrpunyapal/peststan/extension.neon
 ```
 
-## What it does
+## Features
 
-### Generic `expect()` function
+### Generic `expect()` Function
 
-The extension provides generic type inference for Pest's `expect()` function:
+The extension provides generic type inference for Pest's `expect()` function, so PHPStan knows the exact type of the expectation value:
 
 ```php
-expect('hello')->toBeString(); // PHPStan knows this is Expectation<string>
-expect(42)->toBeInt();         // PHPStan knows this is Expectation<int>
-expect($user)->toBeInstanceOf(User::class); // PHPStan knows this is Expectation<User>
+expect('hello');           // Expectation<string>
+expect(42);                // Expectation<int>
+expect(['a' => 1]);        // Expectation<array{a: int}>
+expect($user);             // Expectation<User>
+expect();                  // Expectation<null>
 ```
 
-### Test closure binding
+### Type Narrowing Assertions
 
-The extension ensures `$this` is properly typed as `PHPUnit\Framework\TestCase` in test closures:
+Type-checking assertion methods narrow the generic type parameter, so PHPStan tracks the type through assertion chains:
 
 ```php
-it('has proper $this type', function () {
-    // PHPStan knows $this is PHPUnit\Framework\TestCase
-    $this->assertTrue(true);
-    $this->assertSame('expected', $actual);
-});
+/** @var int|string $value */
+$value = getValue();
 
-test('can use TestCase methods', function () {
-    $this->markTestSkipped('Skipping this test');
+expect($value)->toBeString();
+// PHPStan now knows the expectation wraps a string
+
+expect($value)->toBeInstanceOf(User::class);
+// PHPStan now knows the expectation wraps a User
+```
+
+Supported type-narrowing assertions:
+`toBeString`, `toBeInt`, `toBeFloat`, `toBeBool`, `toBeArray`, `toBeList`, `toBeObject`, `toBeCallable`, `toBeIterable`, `toBeNumeric`, `toBeScalar`, `toBeResource`, `toBeTrue`, `toBeFalse`, `toBeNull`, `toBeInstanceOf`.
+
+### Type-Safe `and()` Chaining
+
+The `and()` method properly changes the generic type parameter, enabling type-safe assertion chains:
+
+```php
+expect('hello')
+    ->toBeString()       // Expectation<string>
+    ->and(42)            // Expectation<int>
+    ->toBeInt()          // Expectation<int>
+    ->and(['a', 'b'])    // Expectation<array{string, string}>
+    ->toHaveCount(2);    // Expectation<array{string, string}>
+```
+
+### `$this` Binding in Test Closures
+
+The extension ensures `$this` is properly typed as `PHPUnit\Framework\TestCase` inside all Pest test closures and lifecycle hooks:
+
+```php
+it('can access test case methods', function () {
+    $this->markTestSkipped();  // PHPStan knows $this is TestCase
 });
 
 beforeEach(function () {
-    // Hooks also have proper $this binding
-    $this->createApplication();
+    $this->assertTrue(true);   // Works in hooks too
 });
 ```
 
-### Pest function stubs
+Supported functions: `it()`, `test()`, `describe()`, `beforeEach()`, `afterEach()`, `beforeAll()`, `afterAll()`.
 
-Complete type definitions for Pest functions including:
+### Pest Function Return Types
 
-- `it()`, `test()`, `describe()`
-- `beforeEach()`, `afterEach()`, `beforeAll()`, `afterAll()`
-- `uses()`, `pest()`
-- `expect()` with full `Expectation` class methods
+Accurate return types for all Pest global functions:
+
+| Function | Return Type |
+|----------|-------------|
+| `expect($value)` | `Expectation<TValue>` |
+| `it()` / `test()` / `todo()` | `TestCall` |
+| `describe()` | `DescribeCall` |
+
+### `not()` and `each()` Return Types
+
+```php
+expect('hello')->not();    // OppositeExpectation<string>
+expect([1, 2])->each();    // EachExpectation<array{int, int}>
+```
+
+### TestCall Chaining
+
+All `TestCall` methods are properly typed for fluent chaining:
+
+```php
+it('does something', function () { /* ... */ })
+    ->with(['a', 'b'])
+    ->group('unit', 'feature')
+    ->skip(false)
+    ->depends('other test')
+    ->throws(RuntimeException::class)
+    ->repeat(3);
+```
+
+### Architecture Testing Support
+
+Architecture testing methods are fully supported:
+
+```php
+expect('App\Models')
+    ->toExtend('Illuminate\Database\Eloquent\Model')
+    ->ignoring('App\Models\Legacy');
+
+expect('App')
+    ->classes()
+    ->toBeFinal();
+
+expect('App\Actions')->toBeInvokable();
+expect('App\DTOs')->toBeReadonly();
+expect('App')->toUseStrictTypes();
+```
 
 ## Testing
 
 ```bash
-composer test      # Run all tests (lint + types + unit)
-composer lint      # Apply code style fixes
-composer test:lint # Check code style (dry-run)
-composer test:types # Run PHPStan analysis
-composer test:unit # Run Pest unit tests
+composer test        # Run all checks (lint + types + unit)
+composer lint        # Apply code style fixes (Rector + Pint)
+composer test:lint   # Check code style (dry-run)
+composer test:types  # Run PHPStan analysis
+composer test:unit   # Run Pest unit tests
 ```
 
 ## Contributing

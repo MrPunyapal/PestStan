@@ -8,13 +8,6 @@ use function PHPStan\Testing\assertType;
 
 use PHPUnit\Framework\TestCase;
 
-// ============================================================================
-// Default TestCase Tests
-// ============================================================================
-
-/**
- * Test that $this is correctly typed as TestCase in it() function.
- */
 function testThisTypeInIt(): void
 {
     it('has correct $this type', function (): void {
@@ -22,9 +15,6 @@ function testThisTypeInIt(): void
     });
 }
 
-/**
- * Test that $this is correctly typed as TestCase in test() function.
- */
 function testThisTypeInTest(): void
 {
     test('has correct $this type', function (): void {
@@ -32,9 +22,6 @@ function testThisTypeInTest(): void
     });
 }
 
-/**
- * Test that $this is correctly typed in beforeEach() hook.
- */
 function testThisTypeInBeforeEach(): void
 {
     beforeEach(function (): void {
@@ -42,12 +29,30 @@ function testThisTypeInBeforeEach(): void
     });
 }
 
-/**
- * Test that $this is correctly typed in afterEach() hook.
- */
 function testThisTypeInAfterEach(): void
 {
     afterEach(function (): void {
+        assertType(TestCase::class, $this);
+    });
+}
+
+function testThisTypeInBeforeAll(): void
+{
+    beforeAll(function (): void {
+        assertType(TestCase::class, $this);
+    });
+}
+
+function testThisTypeInAfterAll(): void
+{
+    afterAll(function (): void {
+        assertType(TestCase::class, $this);
+    });
+}
+
+function testThisTypeInDescribe(): void
+{
+    describe('group', function (): void {
         assertType(TestCase::class, $this);
     });
 }

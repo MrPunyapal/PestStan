@@ -9,15 +9,12 @@ use PHPStan\Testing\TypeInferenceTestCase;
 abstract class TestCase extends TypeInferenceTestCase
 {
     /**
-     * @var string[]
-     */
-    public static array $additionalConfigFiles = [];
-
-    /**
      * @return string[]
      */
     public static function getAdditionalConfigFiles(): array
     {
-        return self::$additionalConfigFiles;
+        return [
+            __DIR__ . '/extension.neon',
+        ];
     }
 }

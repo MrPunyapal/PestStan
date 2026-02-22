@@ -8,30 +8,70 @@ use function PHPStan\Testing\assertType;
 
 use stdClass;
 
-function test(): void
+function testExpectWithStringLiteral(): void
 {
-    // Test that expect() returns generic Expectation<TValue>
-    assertType('Pest\Expectation<string|null>', expect('hello'));
-    assertType('Pest\Expectation<int|null>', expect(42));
-    assertType('Pest\Expectation<array{}|null>', expect([]));
-    assertType('Pest\Expectation<array{id: int, name: string}|null>', expect(['id' => 1, 'name' => 'test']));
+    assertType("Pest\Expectation<'hello'>", expect('hello'));
+}
 
-    // Test with variables
+function testExpectWithIntLiteral(): void
+{
+    assertType('Pest\Expectation<42>', expect(42));
+}
+
+function testExpectWithEmptyArray(): void
+{
+    assertType('Pest\Expectation<array{}>', expect([]));
+}
+
+function testExpectWithShapedArray(): void
+{
+    assertType("Pest\Expectation<array{id: 1, name: 'test'}>", expect(['id' => 1, 'name' => 'test']));
+}
+
+function testExpectWithStringVariable(): void
+{
+    /** @var string $string */
     $string = 'test';
-    assertType('Pest\Expectation<string|null>', expect($string));
+    assertType('Pest\Expectation<string>', expect($string));
+}
 
+function testExpectWithIntVariable(): void
+{
+    /** @var int $number */
     $number = 123;
-    assertType('Pest\Expectation<int|null>', expect($number));
+    assertType('Pest\Expectation<int>', expect($number));
+}
 
-    // Test with null
+function testExpectWithNoArgs(): void
+{
     assertType('Pest\Expectation<null>', expect());
+}
 
-    // Test with mixed types
+function testExpectWithMixedType(): void
+{
     /** @var int|string $mixed */
     $mixed = 'value';
-    assertType('Pest\Expectation<int|string|null>', expect($mixed));
+    assertType('Pest\Expectation<int|string>', expect($mixed));
+}
 
-    // Test with objects
+function testExpectWithObject(): void
+{
     $obj = new stdClass();
-    assertType('Pest\Expectation<stdClass|null>', expect($obj));
+    assertType('Pest\Expectation<stdClass>', expect($obj));
+}
+
+function testExpectWithBool(): void
+{
+    assertType('Pest\Expectation<true>', expect(true));
+    assertType('Pest\Expectation<false>', expect(false));
+}
+
+function testExpectWithFloat(): void
+{
+    assertType('Pest\Expectation<3.14>', expect(3.14));
+}
+
+function testExpectWithNull(): void
+{
+    assertType('Pest\Expectation<null>', expect(null));
 }

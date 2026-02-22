@@ -1,5 +1,5 @@
 {
-    "name": "peststan/peststan",
+    "name": "mrpunyapal/peststan",
     "description": "PHPStan extension for Pest PHP testing framework",
     "type": "phpstan-extension",
     "license": "MIT",

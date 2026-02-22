@@ -2,17 +2,40 @@
 
 declare(strict_types=1);
 
-use PHPStan\Testing\TypeInferenceTestCase;
+use Tests\TestCase;
 
-beforeAll(function (): void {
-    self::$additionalConfigFiles = [__DIR__ . '/../extension.neon'];
-});
-
-test('type assertions', function (string $assertType, string $file, mixed ...$args): void {
+test('expect function types', function (string $assertType, string $file, mixed ...$args): void {
     $this->assertFileAsserts($assertType, $file, ...$args);
 })->with(function (): Iterator {
-    yield from TypeInferenceTestCase::gatherAssertTypes(__DIR__ . '/data/expect-function.php');
-    yield from TypeInferenceTestCase::gatherAssertTypes(__DIR__ . '/data/test-closures.php');
-    yield from TypeInferenceTestCase::gatherAssertTypes(__DIR__ . '/data/expectation-methods.php');
+    yield from TestCase::gatherAssertTypes(__DIR__ . '/data/expect-function.php');
 });
 
+test('test closure types', function (string $assertType, string $file, mixed ...$args): void {
+    $this->assertFileAsserts($assertType, $file, ...$args);
+})->with(function (): Iterator {
+    yield from TestCase::gatherAssertTypes(__DIR__ . '/data/test-closures.php');
+});
+
+test('expectation method types', function (string $assertType, string $file, mixed ...$args): void {
+    $this->assertFileAsserts($assertType, $file, ...$args);
+})->with(function (): Iterator {
+    yield from TestCase::gatherAssertTypes(__DIR__ . '/data/expectation-methods.php');
+});
+
+test('test call method types', function (string $assertType, string $file, mixed ...$args): void {
+    $this->assertFileAsserts($assertType, $file, ...$args);
+})->with(function (): Iterator {
+    yield from TestCase::gatherAssertTypes(__DIR__ . '/data/test-call-methods.php');
+});
+
+test('pest function types', function (string $assertType, string $file, mixed ...$args): void {
+    $this->assertFileAsserts($assertType, $file, ...$args);
+})->with(function (): Iterator {
+    yield from TestCase::gatherAssertTypes(__DIR__ . '/data/pest-functions.php');
+});
+
+test('arch expectation types', function (string $assertType, string $file, mixed ...$args): void {
+    $this->assertFileAsserts($assertType, $file, ...$args);
+})->with(function (): Iterator {
+    yield from TestCase::gatherAssertTypes(__DIR__ . '/data/arch-expectations.php');
+});
