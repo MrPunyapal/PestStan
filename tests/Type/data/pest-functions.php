@@ -4,34 +4,43 @@ declare(strict_types=1);
 
 namespace PestFunctions;
 
+use Pest\Configuration;
+use Pest\PendingCalls\AfterEachCall;
+use Pest\PendingCalls\BeforeEachCall;
+use Pest\PendingCalls\DescribeCall;
+use Pest\PendingCalls\TestCall;
+use Pest\PendingCalls\UsesCall;
+
 use function PHPStan\Testing\assertType;
+
+use PHPUnit\Framework\TestCase;
 
 function testUsesReturnType(): void
 {
-    assertType('Pest\PendingCalls\UsesCall', uses(\PHPUnit\Framework\TestCase::class));
+    assertType(UsesCall::class, uses(TestCase::class));
 }
 
 function testPestReturnType(): void
 {
-    assertType('Pest\Configuration', pest());
+    assertType(Configuration::class, pest());
 }
 
 function testDescribeReturnType(): void
 {
-    assertType('Pest\PendingCalls\DescribeCall', describe('group', function (): void {}));
+    assertType(DescribeCall::class, describe('group', function (): void {}));
 }
 
 function testTodoFunctionReturnType(): void
 {
-    assertType('Pest\PendingCalls\TestCall', todo('implement later'));
+    assertType(TestCall::class, todo('implement later'));
 }
 
 function testBeforeEachReturnType(): void
 {
-    assertType('Pest\PendingCalls\BeforeEachCall', beforeEach(function (): void {}));
+    assertType(BeforeEachCall::class, beforeEach(function (): void {}));
 }
 
 function testAfterEachReturnType(): void
 {
-    assertType('Pest\PendingCalls\AfterEachCall', afterEach(function (): void {}));
+    assertType(AfterEachCall::class, afterEach(function (): void {}));
 }

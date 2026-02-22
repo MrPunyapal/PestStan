@@ -73,5 +73,5 @@ function testExpectWithFloat(): void
 
 function testExpectWithNull(): void
 {
-    assertType('Pest\Expectation<null>', expect(null));
+    assertType('Pest\Expectation<null>', expect());
 }

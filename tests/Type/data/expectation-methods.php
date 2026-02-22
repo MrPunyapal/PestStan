@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ExpectationMethods;
 
+use Pest\Mixins\Expectation;
+
 use function PHPStan\Testing\assertType;
 
 use stdClass;
@@ -151,10 +153,9 @@ function testToBeFalseNarrows(): void
     assertType('Pest\Expectation<false>', $result);
 }
 
-/** @return stdClass|string */
-function getObjectOrString()
+function getObjectOrString(): stdClass|string
 {
-    return rand(0, 1) === 1 ? new stdClass() : 'hello';
+    return random_int(0, 1) === 1 ? new stdClass() : 'hello';
 }
 
 function testToBeInstanceOfNarrows(): void
@@ -234,9 +235,7 @@ function testWhenMethod(): void
 {
     /** @var string $str */
     $str = 'hello';
-    $result = expect($str)->when(true, function ($e) {
-        return $e->toBe('hello');
-    });
+    $result = expect($str)->when(true, fn ($e): Expectation => $e->toBe('hello'));
     assertType('Pest\Expectation<string>', $result);
 }
 

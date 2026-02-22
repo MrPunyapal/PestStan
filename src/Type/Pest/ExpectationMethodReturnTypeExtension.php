@@ -58,7 +58,7 @@ final class ExpectationMethodReturnTypeExtension implements DynamicMethodReturnT
         }
 
         $narrowedType = $this->getNarrowedType($methodName);
-        if ($narrowedType !== null) {
+        if ($narrowedType instanceof Type) {
             return new GenericObjectType(Expectation::class, [$narrowedType]);
         }
 
@@ -121,7 +121,7 @@ final class ExpectationMethodReturnTypeExtension implements DynamicMethodReturnT
 
         if ($classNames !== []) {
             $objectTypes = array_map(
-                static fn ($name) => new ObjectType($name->getValue()),
+                static fn ($name): ObjectType => new ObjectType($name->getValue()),
                 $classNames
             );
 
