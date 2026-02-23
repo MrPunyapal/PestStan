@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
 use Rector\Php82\Rector\Class_\ReadOnlyClassRector;
+use RectorPest\Set\PestLevelSetList;
+use RectorPest\Set\PestSetList;
 
 return RectorConfig::configure()
     ->withPaths([
@@ -13,6 +15,11 @@ return RectorConfig::configure()
     ->withRootFiles()
     ->withSkip([
         ReadOnlyClassRector::class,
+    ])
+    ->withSets([
+        PestLevelSetList::UP_TO_PEST_30,
+        PestSetList::PEST_CODE_QUALITY,
+        PestSetList::PEST_CHAIN,
     ])
     ->withImportNames(removeUnusedImports: true)
     ->withPhpSets(php82: true)
