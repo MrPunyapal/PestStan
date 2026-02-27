@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 function testUsesReturnType(): void
 {
     assertType(UsesCall::class, uses(TestCase::class));
+    assertType(UsesCall::class, pest()->extend(TestCase::class));
 }
 
 function testPestReturnType(): void

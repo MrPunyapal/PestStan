@@ -71,38 +71,38 @@ final class ExpectationMethodReturnTypeExtension implements DynamicMethodReturnT
     private function getNarrowedType(string $methodName): ?Type
     {
         return match ($methodName) {
-            'toBeString' => new StringType(),
-            'toBeInt' => new IntegerType(),
-            'toBeFloat' => new FloatType(),
-            'toBeBool' => new BooleanType(),
+            'toBeString' => new StringType,
+            'toBeInt' => new IntegerType,
+            'toBeFloat' => new FloatType,
+            'toBeBool' => new BooleanType,
             'toBeTrue' => new ConstantBooleanType(true),
             'toBeFalse' => new ConstantBooleanType(false),
-            'toBeNull' => new NullType(),
-            'toBeObject' => new ObjectWithoutClassType(),
-            'toBeCallable' => new CallableType(),
-            'toBeResource' => new ResourceType(),
+            'toBeNull' => new NullType,
+            'toBeObject' => new ObjectWithoutClassType,
+            'toBeCallable' => new CallableType,
+            'toBeResource' => new ResourceType,
             'toBeArray' => new ArrayType(
-                new UnionType([new IntegerType(), new StringType()]),
-                new MixedType(),
+                new UnionType([new IntegerType, new StringType]),
+                new MixedType,
             ),
             'toBeList' => TypeCombinator::intersect(
-                new ArrayType(new IntegerType(), new MixedType()),
-                new AccessoryArrayListType(),
+                new ArrayType(new IntegerType, new MixedType),
+                new AccessoryArrayListType,
             ),
-            'toBeIterable' => new IterableType(new MixedType(), new MixedType()),
+            'toBeIterable' => new IterableType(new MixedType, new MixedType),
             'toBeNumeric' => new UnionType([
-                new FloatType(),
-                new IntegerType(),
+                new FloatType,
+                new IntegerType,
                 new IntersectionType([
-                    new StringType(),
-                    new AccessoryNumericStringType(),
+                    new StringType,
+                    new AccessoryNumericStringType,
                 ]),
             ]),
             'toBeScalar' => new UnionType([
-                new BooleanType(),
-                new FloatType(),
-                new IntegerType(),
-                new StringType(),
+                new BooleanType,
+                new FloatType,
+                new IntegerType,
+                new StringType,
             ]),
             default => null,
         };
@@ -113,7 +113,7 @@ final class ExpectationMethodReturnTypeExtension implements DynamicMethodReturnT
         $args = $methodCall->getArgs();
 
         if ($args === []) {
-            return new GenericObjectType(Expectation::class, [new ObjectWithoutClassType()]);
+            return new GenericObjectType(Expectation::class, [new ObjectWithoutClassType]);
         }
 
         $classType = $scope->getType($args[0]->value);
@@ -132,6 +132,6 @@ final class ExpectationMethodReturnTypeExtension implements DynamicMethodReturnT
             return new GenericObjectType(Expectation::class, [$narrowedType]);
         }
 
-        return new GenericObjectType(Expectation::class, [new ObjectWithoutClassType()]);
+        return new GenericObjectType(Expectation::class, [new ObjectWithoutClassType]);
     }
 }

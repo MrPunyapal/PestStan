@@ -155,7 +155,7 @@ function testToBeFalseNarrows(): void
 
 function getObjectOrString(): stdClass|string
 {
-    return random_int(0, 1) === 1 ? new stdClass() : 'hello';
+    return random_int(0, 1) === 1 ? new stdClass : 'hello';
 }
 
 function testToBeInstanceOfNarrows(): void
