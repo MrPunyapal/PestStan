@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
 use Rector\Php82\Rector\Class_\ReadOnlyClassRector;
+use RectorPest\Rules\Pest2ToPest3\UsesToExtendRector;
 use RectorPest\Set\PestLevelSetList;
 use RectorPest\Set\PestSetList;
 
@@ -15,6 +16,9 @@ return RectorConfig::configure()
     ->withRootFiles()
     ->withSkip([
         ReadOnlyClassRector::class,
+        UsesToExtendRector::class => [
+            '/tests/Type/data/pest-functions.php',
+        ],
     ])
     ->withSets([
         PestLevelSetList::UP_TO_PEST_30,
