@@ -56,7 +56,7 @@ function testExpectWithMixedType(): void
 
 function testExpectWithObject(): void
 {
-    $obj = new stdClass();
+    $obj = new stdClass;
     assertType('Pest\Expectation<stdClass>', expect($obj));
 }
 

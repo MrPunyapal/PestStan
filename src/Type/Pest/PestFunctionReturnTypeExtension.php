@@ -55,7 +55,7 @@ final class PestFunctionReturnTypeExtension implements DynamicFunctionReturnType
         $args = $functionCall->getArgs();
 
         if ($args === []) {
-            return new GenericObjectType(Expectation::class, [new NullType()]);
+            return new GenericObjectType(Expectation::class, [new NullType]);
         }
 
         $valueType = $scope->getType($args[0]->value);
