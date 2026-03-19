@@ -74,11 +74,15 @@ expect('hello')
 
 ### `$this` Binding in Test Closures
 
-The extension ensures `$this` is properly typed as `PHPUnit\Framework\TestCase` inside all Pest test closures and lifecycle hooks:
+The extension ensures `$this` is properly typed inside all Pest test closures and lifecycle hooks. It auto-detects your TestCase class from your `Pest.php` configuration file:
 
 ```php
+// tests/Pest.php
+uses(Tests\TestCase::class)->in('Feature');
+
+// tests/Feature/ExampleTest.php
 it('can access test case methods', function () {
-    $this->markTestSkipped();  // PHPStan knows $this is TestCase
+    $this->get('/');  // PHPStan knows $this is Tests\TestCase
 });
 
 beforeEach(function () {
@@ -87,6 +91,54 @@ beforeEach(function () {
 ```
 
 Supported functions: `it()`, `test()`, `describe()`, `beforeEach()`, `afterEach()`, `beforeAll()`, `afterAll()`.
+
+### Dynamic Properties in Test Closures
+
+Pest allows setting and accessing arbitrary properties on `$this` inside test closures. The extension supports this by treating all undefined properties on TestCase subclasses as `mixed`:
+
+```php
+beforeEach(function () {
+    $this->user = User::factory()->create();  // No error
+});
+
+it('can access dynamic props', function () {
+    $this->user;  // mixed - no "undefined property" error
+});
+```
+
+## Configuration
+
+### Automatic TestCase Detection
+
+PestStan reads your `Pest.php` files to determine which TestCase class is used in each test directory. It supports both `uses()` and `pest()->extend()` patterns:
+
+```php
+// uses(TestCase::class)->in('Feature');
+// pest()->extend(TestCase::class)->in('Unit');
+```
+
+No configuration needed — it discovers `Pest.php` files automatically from your PHPStan `paths`.
+
+### Manual TestCase Override
+
+If auto-detection doesn't work for your setup, or you want a global default, set it in your `phpstan.neon`:
+
+```neon
+parameters:
+    peststan:
+        testCaseClass: App\Testing\TestCase
+```
+
+### Explicit Pest.php Paths
+
+If your `Pest.php` files aren't within PHPStan's analysis paths, you can specify them explicitly:
+
+```neon
+parameters:
+    peststan:
+        pestConfigFiles:
+            - tests/Pest.php
+```
 
 ### Pest Function Return Types
 

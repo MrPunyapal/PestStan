@@ -36,17 +36,27 @@ PestStan/
 ├── src/Type/Pest/
 │   ├── PestFunctionReturnTypeExtension.php            # expect/it/test/todo/describe return types
 │   ├── ExpectationMethodReturnTypeExtension.php       # Type narrowing for assertion methods
-│   └── TestClosureThisTypeExtension.php               # $this binding in closures
+│   ├── OppositeExpectationMethodReturnTypeExtension.php # not() return types
+│   ├── TestClosureThisTypeExtension.php               # $this binding in closures
+│   ├── PestConfigReader.php                           # Pest.php auto-detection for TestCase
+│   ├── TestCasePropertiesExtension.php                # Dynamic property support
+│   └── PestTestCaseProperty.php                       # PropertyReflection for dynamic props
 ├── tests/
 │   ├── Pest.php                                       # Pest bootstrap
 │   ├── TestCase.php                                   # Base test case
+│   ├── CustomTestCaseTestCase.php                     # Test case for custom TestCase config
 │   ├── extension.neon                                 # Test PHPStan config
 │   └── Type/
 │       ├── ExpectTypeTest.php                         # Main test runner
+│       ├── CustomTestCaseTest.php                     # Custom TestCase test runner
+│       ├── Fixtures/
+│       │   └── CustomTestCase.php                     # Test fixture
+│       ├── custom-testcase-extension.neon             # PHPStan config for custom TestCase tests
 │       └── data/
 │           ├── expect-function.php                    # expect() return type tests
 │           ├── expectation-methods.php                # Assertion method type tests
-│           ├── test-closures.php                      # $this binding tests
+│           ├── test-closures.php                      # $this binding + dynamic property tests
+│           ├── test-closures-custom-testcase.php      # Custom TestCase $this binding tests
 │           ├── test-call-methods.php                  # TestCall chaining tests
 │           ├── pest-functions.php                     # Pest function return type tests
 │           └── arch-expectations.php                  # Architecture testing type tests
@@ -79,11 +89,25 @@ All type information is provided through PHPStan dynamic type extensions (no stu
 
 ### 3. TestClosureThisTypeExtension
 
-`FunctionParameterClosureThisExtension` that binds `$this` to `PHPUnit\Framework\TestCase` in closures passed to `it()`, `test()`, `describe()`, `beforeEach()`, `afterEach()`, `beforeAll()`, and `afterAll()`.
+`FunctionParameterClosureThisExtension` that binds `$this` in closures passed to `it()`, `test()`, `describe()`, `beforeEach()`, `afterEach()`, `beforeAll()`, and `afterAll()`.
 
-### 4. Configuration (`extension.neon`)
+The `$this` type is resolved in this order:
+1. **Auto-detect**: `PestConfigReader` parses `Pest.php` files to find `uses(X::class)->in(...)` or `pest()->extend(X::class)->in(...)` and maps directories to TestCase classes. The longest-matching directory prefix wins.
+2. **Manual fallback**: Falls back to `peststan.testCaseClass` parameter (default: `PHPUnit\Framework\TestCase`).
 
-Registers all three extensions with PHPStan. Auto-loaded via `phpstan/extension-installer` or manually included.
+### 4. PestConfigReader
+
+Parses `Pest.php` configuration files using `nikic/php-parser` with `NameResolver` to resolve fully-qualified class names from `use` statements. Discovers `Pest.php` files automatically from PHPStan's analysis `paths`, or from explicit `peststan.pestConfigFiles`.
+
+### 5. TestCasePropertiesExtension
+
+`PropertiesClassReflectionExtension` that allows dynamic property access on `TestCase` subclasses. Pest supports `$this->prop = value` in `beforeEach()` closures, accessible in test closures. This extension returns `mixed` for any undefined property on a `TestCase` subclass.
+
+Requires `universalObjectCratesClasses` for `PHPUnit\Framework\TestCase` (set automatically in `extension.neon`) because PHPStan only consults `PropertiesClassReflectionExtension` when `allowsDynamicProperties()` returns `true`.
+
+### 6. Configuration (`extension.neon`)
+
+Registers all extensions with PHPStan. Configures `universalObjectCratesClasses` for dynamic property support and `ignoreErrors` for Pest's `@internal` class annotations. Auto-loaded via `phpstan/extension-installer` or manually included.
 
 ## Testing Approach
 

@@ -56,3 +56,17 @@ function testThisTypeInDescribe(): void
         assertType(TestCase::class, $this);
     });
 }
+
+function testDynamicPropertyAccessInIt(): void
+{
+    it('allows dynamic properties on $this', function (): void {
+        assertType('mixed', $this->dynamicProp);
+    });
+}
+
+function testDynamicPropertyAccessInBeforeEach(): void
+{
+    beforeEach(function (): void {
+        assertType('mixed', $this->someProp);
+    });
+}
