@@ -133,9 +133,11 @@ final class PestConfigReader
             if ($entry === '.') {
                 continue;
             }
+
             if ($entry === '..') {
                 continue;
             }
+
             $path = $directory . DIRECTORY_SEPARATOR . $entry;
             if (is_dir($path)) {
                 $this->findPestFilesInDirectory($path, $results);
