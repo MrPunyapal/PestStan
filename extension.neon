@@ -10,6 +10,11 @@ services:
             - phpstan.broker.dynamicMethodReturnTypeExtension
 
     -
+        class: PestStan\Type\Pest\OppositeExpectationMethodReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension
+
+    -
         class: PestStan\Type\Pest\TestClosureThisTypeExtension
         tags:
             - phpstan.functionParameterClosureThisExtension
