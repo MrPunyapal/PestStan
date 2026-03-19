@@ -1,0 +1,6 @@
+includes:
+    - ../../extension.neon
+
+parameters:
+    peststan:
+        testCaseClass: Tests\Type\Fixtures\CustomTestCase
