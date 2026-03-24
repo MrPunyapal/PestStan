@@ -49,3 +49,10 @@ services:
         class: PestStan\Type\Pest\TestCasePropertiesExtension
         tags:
             - phpstan.broker.propertiesClassReflectionExtension
+
+    -
+        class: PestStan\Type\Pest\ProtectedMethodCallIgnoreExtension
+        arguments:
+            testCaseClass: %peststan.testCaseClass%
+        tags:
+            - phpstan.ignoreErrorExtension

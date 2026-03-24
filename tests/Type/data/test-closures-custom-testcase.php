@@ -35,3 +35,17 @@ function testDynamicPropertyWithCustomTestCase(): void
         assertType('mixed', $this->customProp);
     });
 }
+
+function testProtectedMethodCallOnCustomTestCase(): void
+{
+    it('can call protected CustomTestCase methods on $this', function (): void {
+        assertType('string', $this->createHelper());
+    });
+}
+
+function testProtectedMethodCallFromParentOnCustomTestCase(): void
+{
+    it('can call protected parent TestCase methods on $this', function (): void {
+        assertType('string', $this->getActualOutputForAssertion());
+    });
+}
