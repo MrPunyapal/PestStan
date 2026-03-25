@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace HigherOrderExpectations;
 
-use Tests\Type\Fixtures\Author;
-use Tests\Type\Fixtures\Post;
-
 use function PHPStan\Testing\assertType;
+
+use Tests\Type\Fixtures\Post;
 
 function testPropertyAccessOnExpectation(): void
 {
@@ -55,4 +54,22 @@ function testAndThenHigherOrder(): void
         ->and($post)
         ->title;
     assertType('Pest\Expectations\HigherOrderExpectation<Pest\Expectation<Tests\Type\Fixtures\Post>, string>', $result);
+}
+
+function testNullableValueProperty(): void
+{
+    /** @var Post|null $post */
+    $post = null;
+    $result = expect($post)->title;
+    assertType('Pest\Expectations\HigherOrderExpectation<Pest\Expectation<Tests\Type\Fixtures\Post|null>, string>', $result);
+}
+
+function testNullableChain(): void
+{
+    /** @var Post|null $post */
+    $post = null;
+    $result = expect($post)
+        ->title->toBe('Title')
+        ->content;
+    assertType('Pest\Expectations\HigherOrderExpectation<Pest\Expectation<Tests\Type\Fixtures\Post|null>, string>', $result);
 }
