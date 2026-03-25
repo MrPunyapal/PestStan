@@ -17,7 +17,6 @@ use PHPStan\Type\ExpressionTypeResolverExtension;
 use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
-use PHPStan\Type\TypeCombinator;
 
 /**
  * Resolves types for higher order expectation property access and method chaining.
@@ -161,13 +160,11 @@ final class HigherOrderExpectationTypeExtension implements ExpressionTypeResolve
 
     private function resolvePropertyType(Type $objectType, string $propertyName, Scope $scope): ?Type
     {
-        $nonNullType = TypeCombinator::removeNull($objectType);
-
-        if (! $nonNullType->hasProperty($propertyName)->yes()) {
+        if ($objectType->hasProperty($propertyName)->no()) {
             return null;
         }
 
-        return $nonNullType->getProperty($propertyName, $scope)->getReadableType();
+        return $objectType->getProperty($propertyName, $scope)->getReadableType();
     }
 
     private function isNativeExpectationProperty(string $propertyName): bool
