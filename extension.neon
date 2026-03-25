@@ -51,6 +51,11 @@ services:
             - phpstan.broker.propertiesClassReflectionExtension
 
     -
+        class: PestStan\Type\Pest\HigherOrderExpectationTypeExtension
+        tags:
+            - phpstan.broker.expressionTypeResolverExtension
+
+    -
         class: PestStan\Type\Pest\ProtectedMethodCallIgnoreExtension
         arguments:
             testCaseClass: %peststan.testCaseClass%
