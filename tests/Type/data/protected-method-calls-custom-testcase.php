@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use Tests\Type\Fixtures\CustomTestCase;
-
 it('can call protected child class methods on $this in Pest it() closure', function (): void {
     $this->createHelper();
     $this->getActualOutputForAssertion();

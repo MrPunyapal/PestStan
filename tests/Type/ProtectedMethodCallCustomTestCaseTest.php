@@ -29,7 +29,7 @@ class ProtectedMethodCallCustomTestCaseTest extends RuleTestCase
         ];
     }
 
-    public function testProtectedMethodCallsAreAllowedWithCustomTestCase(): void
+    public function test_protected_method_calls_are_allowed_with_custom_test_case(): void
     {
         $this->analyse([
             __DIR__ . '/data/protected-method-calls-custom-testcase.php',

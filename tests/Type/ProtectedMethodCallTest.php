@@ -29,7 +29,7 @@ class ProtectedMethodCallTest extends RuleTestCase
         ];
     }
 
-    public function testProtectedMethodCallsAreAllowedInPestClosures(): void
+    public function test_protected_method_calls_are_allowed_in_pest_closures(): void
     {
         $this->analyse([
             __DIR__ . '/data/protected-method-calls.php',

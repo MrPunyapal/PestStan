@@ -32,19 +32,19 @@ final class ProtectedMethodCallIgnoreExtension implements IgnoreErrorExtension
             return false;
         }
 
-        if (!$scope->isInAnonymousFunction()) {
+        if (! $scope->isInAnonymousFunction()) {
             return false;
         }
 
-        if (!$node instanceof MethodCall) {
+        if (! $node instanceof MethodCall) {
             return false;
         }
 
-        if (!$node->var instanceof Variable || $node->var->name !== 'this') {
+        if (! $node->var instanceof Variable || $node->var->name !== 'this') {
             return false;
         }
 
-        if (!$scope->hasVariableType('this')->yes()) {
+        if (! $scope->hasVariableType('this')->yes()) {
             return false;
         }
 

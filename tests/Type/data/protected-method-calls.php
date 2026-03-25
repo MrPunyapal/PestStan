@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
-
 it('can call protected methods on $this in Pest it() closure', function (): void {
     $this->getActualOutputForAssertion();
     $this->setUp();
