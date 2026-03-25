@@ -28,7 +28,7 @@ final class PestInternalClassAccessIgnoreExtension implements IgnoreErrorExtensi
         return false;
     }
 
-    /** @param list<class-string> $classes */
+    /** @param list<non-empty-string> $classes */
     private function isPestInternalType(array $classes): bool
     {
         foreach ($classes as $class) {
