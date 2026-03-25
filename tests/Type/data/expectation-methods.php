@@ -250,7 +250,7 @@ function testToBeListNarrows(): void
 function testChainedNot(): void
 {
     $result = expect(1)->not->toBe(2)->not->toBe(3);
-    assertType('Pest\Expectation<mixed>', $result);
+    assertType('Pest\Expectation<1>', $result);
 }
 
 function testChainedNotWithMethod(): void

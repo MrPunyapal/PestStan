@@ -73,3 +73,21 @@ function testNullableChain(): void
         ->content;
     assertType('Pest\Expectations\HigherOrderExpectation<Pest\Expectation<Tests\Type\Fixtures\Post|null>, string>', $result);
 }
+
+function testNotPropertyPreservesType(): void
+{
+    /** @var Post|null $post */
+    $post = null;
+    $result = expect($post)->not;
+    assertType('Pest\Expectations\OppositeExpectation<Tests\Type\Fixtures\Post|null>', $result);
+}
+
+function testNotToBeNullThenHigherOrder(): void
+{
+    /** @var Post|null $post */
+    $post = null;
+    $result = expect($post)
+        ->not->toBeNull()
+        ->title;
+    assertType('Pest\Expectations\HigherOrderExpectation<Pest\Expectation<Tests\Type\Fixtures\Post|null>, string>', $result);
+}

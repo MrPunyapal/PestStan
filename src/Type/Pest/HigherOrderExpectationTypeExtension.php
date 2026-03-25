@@ -6,6 +6,7 @@ namespace PestStan\Type\Pest;
 
 use Pest\Expectation;
 use Pest\Expectations\HigherOrderExpectation;
+use Pest\Expectations\OppositeExpectation;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
@@ -24,7 +25,7 @@ use PHPStan\Type\TypeCombinator;
 final class HigherOrderExpectationTypeExtension implements ExpressionTypeResolverExtension
 {
     /** @var list<string> */
-    private const EXPECTATION_KNOWN_PROPERTIES = ['not', 'each', 'classes', 'traits', 'interfaces', 'enums'];
+    private const EXPECTATION_KNOWN_PROPERTIES = ['each', 'classes', 'traits', 'interfaces', 'enums'];
 
     public function __construct(
         private readonly ReflectionProvider $reflectionProvider,
@@ -67,6 +68,11 @@ final class HigherOrderExpectationTypeExtension implements ExpressionTypeResolve
 
     private function resolveExpectationPropertyFetch(Type $varType, string $propertyName, Scope $scope): ?Type
     {
+        if ($propertyName === 'not') {
+            $valueType = $varType->getTemplateType(Expectation::class, 'TValue');
+            return new GenericObjectType(OppositeExpectation::class, [$valueType]);
+        }
+
         if (in_array($propertyName, self::EXPECTATION_KNOWN_PROPERTIES, true)) {
             return null;
         }
