@@ -70,3 +70,24 @@ function testDynamicPropertyAccessInBeforeEach(): void
         assertType('mixed', $this->someProp);
     });
 }
+
+function testProtectedMethodCallInIt(): void
+{
+    it('can call protected TestCase methods on $this', function (): void {
+        assertType('string', $this->getActualOutputForAssertion());
+    });
+}
+
+function testProtectedMethodCallInTest(): void
+{
+    test('can call protected TestCase methods on $this', function (): void {
+        assertType('string', $this->getActualOutputForAssertion());
+    });
+}
+
+function testProtectedMethodCallInBeforeEach(): void
+{
+    beforeEach(function (): void {
+        assertType('string', $this->getActualOutputForAssertion());
+    });
+}
