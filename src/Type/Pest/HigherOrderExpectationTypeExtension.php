@@ -69,6 +69,7 @@ final class HigherOrderExpectationTypeExtension implements ExpressionTypeResolve
     {
         if ($propertyName === 'not') {
             $valueType = $varType->getTemplateType(Expectation::class, 'TValue');
+
             return new GenericObjectType(OppositeExpectation::class, [$valueType]);
         }
 
