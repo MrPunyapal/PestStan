@@ -4,11 +4,6 @@ parameters:
         pestConfigFiles: []
     universalObjectCratesClasses:
         - PHPUnit\Framework\TestCase
-    ignoreErrors:
-        -
-            identifier: method.internalClass
-            message: '#class Pest\\#'
-            reportUnmatched: false
 
 parametersSchema:
     peststan: structure([
@@ -49,6 +44,21 @@ services:
         class: PestStan\Type\Pest\TestCasePropertiesExtension
         tags:
             - phpstan.broker.propertiesClassReflectionExtension
+
+    -
+        class: PestStan\Type\Pest\ExpectationPropertiesExtension
+        tags:
+            - phpstan.broker.propertiesClassReflectionExtension
+
+    -
+        class: PestStan\Type\Pest\HigherOrderExpectationTypeExtension
+        tags:
+            - phpstan.broker.expressionTypeResolverExtension
+
+    -
+        class: PestStan\Type\Pest\PestInternalClassAccessIgnoreExtension
+        tags:
+            - phpstan.ignoreErrorExtension
 
     -
         class: PestStan\Type\Pest\ProtectedMethodCallIgnoreExtension
