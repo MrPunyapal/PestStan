@@ -159,3 +159,40 @@ function testBeforeEachFloatLiteral(): void
         assertType('float', $this->price);
     });
 }
+
+function testBeforeEachVarAnnotation(): void
+{
+    beforeEach(function (): void {
+        /** @var Post $post */
+        $this->post = Post::factory()->create();
+    });
+
+    it('resolves property type from @var PHPDoc annotation', function (): void {
+        assertType(Post::class, $this->post);
+    });
+}
+
+function testBeforeEachVarAnnotationWithoutVarName(): void
+{
+    beforeEach(function (): void {
+        /** @var Author */
+        $this->author = Author::factory()->create();
+    });
+
+    it('resolves property type from @var PHPDoc without variable name', function (): void {
+        assertType(Author::class, $this->author);
+    });
+}
+
+function testBeforeEachVarAnnotationOnLocalVar(): void
+{
+    beforeEach(function (): void {
+        /** @var Post $post */
+        $post = Post::factory()->create();
+        $this->post = $post;
+    });
+
+    it('resolves property type from @var-annotated local variable', function (): void {
+        assertType(Post::class, $this->post);
+    });
+}
