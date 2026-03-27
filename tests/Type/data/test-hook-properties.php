@@ -164,7 +164,8 @@ function testBeforeEachVarAnnotation(): void
 {
     beforeEach(function (): void {
         /** @var Post $post */
-        $this->post = Post::factory()->create();
+        $post = Post::factory()->create();
+        $this->post = $post;
     });
 
     it('resolves property type from @var PHPDoc annotation', function (): void {
@@ -176,7 +177,8 @@ function testBeforeEachVarAnnotationWithoutVarName(): void
 {
     beforeEach(function (): void {
         /** @var Author */
-        $this->author = Author::factory()->create();
+        $author = Author::factory()->create();
+        $this->author = $author;
     });
 
     it('resolves property type from @var PHPDoc without variable name', function (): void {

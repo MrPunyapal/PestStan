@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Type\Pest;
 
+use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Assign;
@@ -185,16 +186,20 @@ final class PestHookPropertyReader
 
         $nodeFinder = new NodeFinder;
 
-        $this->extractUsesBeforeEachProperties($nodeFinder, $stmts);
+        $this->extractUsesBeforeEachProperties($nodeFinder, $stmts, $useMap, $filePath);
     }
 
     /**
-     * Extracts property expressions from uses()->beforeEach(Closure)->in() chains.
+     * Extracts property expressions from uses()->beforeEach(Closure)->in() chains
+     * and stores them under the directory of the Pest.php file.
      *
      * @param  Node[]  $stmts
+     * @param  array<string, string>  $useMap
      */
-    private function extractUsesBeforeEachProperties(NodeFinder $nodeFinder, array $stmts): void
+    private function extractUsesBeforeEachProperties(NodeFinder $nodeFinder, array $stmts, array $useMap, string $pestFilePath): void
     {
+        $directoryPath = $this->normalizePath(dirname($pestFilePath)) . '/';
+
         /** @var MethodCall[] $methodCalls */
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
@@ -207,7 +212,24 @@ final class PestHookPropertyReader
                 continue;
             }
 
-            $closure = $this->extractClosureArg($methodCall);
+            foreach ($methodCall->getArgs() as $arg) {
+                if (! $arg->value instanceof Closure) {
+                    continue;
+                }
+
+                $assigned = $this->extractPropertyAssignments($arg->value, $useMap);
+                foreach ($assigned as $name => $exprs) {
+                    if (! isset($this->directoryPropertyMap[$directoryPath][$name])) {
+                        $this->directoryPropertyMap[$directoryPath][$name] = [];
+                    }
+
+                    foreach ($exprs as $expr) {
+                        $this->directoryPropertyMap[$directoryPath][$name][] = $expr;
+                    }
+                }
+
+                break;
+            }
         }
     }
 
@@ -257,20 +279,23 @@ final class PestHookPropertyReader
                 continue;
             }
 
-            $closure = $this->extractClosureArg($funcCall);
-            if ($closure === null) {
-                continue;
-            }
-
-            $assigned = $this->extractPropertyAssignments($closure, $useMap);
-            foreach ($assigned as $name => $exprs) {
-                if (! isset($properties[$name])) {
-                    $properties[$name] = [];
+            foreach ($funcCall->getArgs() as $arg) {
+                if (! $arg->value instanceof Closure) {
+                    continue;
                 }
 
-                foreach ($exprs as $expr) {
-                    $properties[$name][] = $expr;
+                $assigned = $this->extractPropertyAssignments($arg->value, $useMap);
+                foreach ($assigned as $name => $exprs) {
+                    if (! isset($properties[$name])) {
+                        $properties[$name] = [];
+                    }
+
+                    foreach ($exprs as $expr) {
+                        $properties[$name][] = $expr;
+                    }
                 }
+
+                break;
             }
         }
 
@@ -303,7 +328,11 @@ final class PestHookPropertyReader
                 continue;
             }
 
-            if (! $var->var instanceof Variable || $var->var->name !== 'this') {
+            if (! $var->var instanceof Variable) {
+                continue;
+            }
+
+            if ($var->var->name !== 'this') {
                 continue;
             }
 
@@ -322,9 +351,9 @@ final class PestHookPropertyReader
             }
 
             $docComment = $stmt->getDocComment();
-            if ($docComment !== null) {
+            if ($docComment instanceof Doc) {
                 $syntheticExpr = $this->resolveExprFromDocComment($docComment->getText(), null, $useMap);
-                if ($syntheticExpr !== null) {
+                if ($syntheticExpr instanceof Expr) {
                     $rhsExpr = $syntheticExpr;
                 }
             }
@@ -356,17 +385,22 @@ final class PestHookPropertyReader
             }
 
             $var = $expr->var;
-            if (! $var instanceof Variable || ! is_string($var->name)) {
+            if (! $var instanceof Variable) {
+                continue;
+            }
+
+            if (! is_string($var->name)) {
                 continue;
             }
 
             $varName = $var->name;
             $docComment = $stmt->getDocComment();
 
-            if ($docComment !== null) {
+            if ($docComment instanceof Doc) {
                 $syntheticExpr = $this->resolveExprFromDocComment($docComment->getText(), $varName, $useMap);
-                if ($syntheticExpr !== null) {
+                if ($syntheticExpr instanceof Expr) {
                     $map[$varName] = $syntheticExpr;
+
                     continue;
                 }
             }
@@ -413,20 +447,6 @@ final class PestHookPropertyReader
         }
 
         return new New_(new FullyQualified($fqcn));
-    }
-
-    /**
-     * Extracts the Closure argument from a function/method call.
-     */
-    private function extractClosureArg(FuncCall|MethodCall $call): ?Closure
-    {
-        foreach ($call->getArgs() as $arg) {
-            if ($arg->value instanceof Closure) {
-                return $arg->value;
-            }
-        }
-
-        return null;
     }
 
     /**
