@@ -53,6 +53,16 @@ services:
             - phpstan.broker.propertiesClassReflectionExtension
 
     -
+        class: PestStan\Type\Pest\PestHookPropertyReader
+        arguments:
+            scanPaths: %paths%
+
+    -
+        class: PestStan\Type\Pest\TestCaseDynamicPropertyTypeExtension
+        tags:
+            - phpstan.broker.expressionTypeResolverExtension
+
+    -
         class: PestStan\Type\Pest\HigherOrderExpectationTypeExtension
         tags:
             - phpstan.broker.expressionTypeResolverExtension
