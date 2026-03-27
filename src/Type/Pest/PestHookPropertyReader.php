@@ -418,7 +418,7 @@ final class PestHookPropertyReader
      */
     private function resolveExprFromDocComment(string $docText, ?string $varName, array $useMap): ?Expr
     {
-        if (! preg_match('/@var\s+([\\\\\w]+)(?:\s+\$(\w+))?/', $docText, $matches)) {
+        if (! (bool) preg_match('/@var\s+([\\\\\w]+)(?:\s+\$(\w+))?/', $docText, $matches)) {
             return null;
         }
 
