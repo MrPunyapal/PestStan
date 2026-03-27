@@ -4,6 +4,8 @@ parameters:
         pestConfigFiles: []
     universalObjectCratesClasses:
         - PHPUnit\Framework\TestCase
+    scanDirectories:
+        - src
 
 parametersSchema:
     peststan: structure([
