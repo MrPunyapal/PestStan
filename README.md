@@ -94,27 +94,53 @@ Supported functions: `it()`, `test()`, `describe()`, `beforeEach()`, `afterEach(
 
 ### Dynamic Properties in Test Closures
 
-Pest allows setting and accessing arbitrary properties on `$this` inside test closures. The extension supports this by treating all undefined properties on TestCase subclasses as `mixed`:
+Pest allows setting properties on `$this` inside `beforeEach`/`beforeAll` hooks. The extension reads those assignments and **infers the exact type** — no `@var` annotation or extra local variable required:
 
 ```php
 beforeEach(function () {
-    $this->user = User::factory()->create();  // No error
+    $this->post   = new Post;                    // Post
+    $this->title  = 'Hello';                     // 'Hello' (constant string)
+    $this->count  = 42;                          // 42 (constant int)
+    $this->active = true;                        // true
 });
 
-it('can access dynamic props', function () {
-    $this->user;  // mixed - no "undefined property" error
+it('knows the property types', function () {
+    $this->post->title;          // PHPStan knows $this->post is Post — no "Cannot access property on mixed" error
+    strlen($this->title);        // fine — PHPStan knows it is a string
 });
 ```
+
+For method-call chains such as factory calls, annotate the local variable with `@var` to guide inference:
+
+```php
+beforeEach(function () {
+    /** @var User $user */
+    $user        = User::factory()->create();
+    $this->user  = $user;        // User
+});
+```
+
+If the same property is set by multiple hooks the type is **unioned**:
+
+```php
+beforeEach(function () { $this->item = new Post; });
+beforeEach(function () { $this->item = new Comment; });
+
+it('sees the union', function () {
+    $this->item;  // Post|Comment
+});
+```
+
+Properties that are never set in a hook remain `mixed`.
 
 ## Configuration
 
 ### Automatic TestCase Detection
 
-PestStan reads your `Pest.php` files to determine which TestCase class is used in each test directory. It supports both `uses()` and `pest()->extend()` patterns:
+PestStan reads your `Pest.php` files to determine which TestCase class is used in each test directory. It supports the `uses()` pattern:
 
 ```php
 // uses(TestCase::class)->in('Feature');
-// pest()->extend(TestCase::class)->in('Unit');
 ```
 
 No configuration needed — it discovers `Pest.php` files automatically from your PHPStan `paths`.
