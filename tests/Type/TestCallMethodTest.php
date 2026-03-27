@@ -9,8 +9,9 @@ use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 
 /**
- * Verifies that method.notFound and method.nonObject errors are suppressed for
- * fluent method chains on TestCall (e.g. arch()->preset()->php()).
+ * Verifies that method.notFound, method.nonObject, and method.internalTrait
+ * errors are suppressed for fluent method chains on TestCall
+ * (e.g. arch()->preset()->php()).
  *
  * @extends RuleTestCase<CallMethodsRule>
  */

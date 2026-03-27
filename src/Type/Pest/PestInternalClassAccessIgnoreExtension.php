@@ -25,6 +25,10 @@ final class PestInternalClassAccessIgnoreExtension implements IgnoreErrorExtensi
             return $this->isPestInternalType($scope->getType($node->var)->getReferencedClasses());
         }
 
+        if ($identifier === 'method.internalTrait' && $node instanceof MethodCall) {
+            return $this->isPestInternalType($scope->getType($node->var)->getReferencedClasses());
+        }
+
         return false;
     }
 
