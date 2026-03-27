@@ -6,11 +6,17 @@ namespace PestStan\Type\Pest;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\PropertyFetch;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\Name\FullyQualified;
+use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Use_;
 use PhpParser\NodeFinder;
@@ -252,9 +258,161 @@ final class PestHookPropertyReader
             }
 
             $closure = $this->extractClosureArg($funcCall);
+            if ($closure === null) {
+                continue;
+            }
+
+            $assigned = $this->extractPropertyAssignments($closure, $useMap);
+            foreach ($assigned as $name => $exprs) {
+                if (! isset($properties[$name])) {
+                    $properties[$name] = [];
+                }
+
+                foreach ($exprs as $expr) {
+                    $properties[$name][] = $expr;
+                }
+            }
         }
 
         return $properties;
+    }
+
+    /**
+     * Extracts $this->prop = expr assignments from a hook closure.
+     *
+     * @param  array<string, string>  $useMap
+     * @return array<string, list<Expr>>
+     */
+    private function extractPropertyAssignments(Closure $closure, array $useMap): array
+    {
+        $properties = [];
+        $localVarMap = $this->buildLocalVarExprMap($closure, $useMap);
+
+        foreach ($closure->stmts as $stmt) {
+            if (! $stmt instanceof Expression) {
+                continue;
+            }
+
+            $expr = $stmt->expr;
+            if (! $expr instanceof Assign) {
+                continue;
+            }
+
+            $var = $expr->var;
+            if (! $var instanceof PropertyFetch) {
+                continue;
+            }
+
+            if (! $var->var instanceof Variable || $var->var->name !== 'this') {
+                continue;
+            }
+
+            if (! $var->name instanceof Identifier) {
+                continue;
+            }
+
+            $propName = $var->name->name;
+            $rhsExpr = $expr->expr;
+
+            if ($rhsExpr instanceof Variable && is_string($rhsExpr->name)) {
+                $varName = $rhsExpr->name;
+                if (isset($localVarMap[$varName])) {
+                    $rhsExpr = $localVarMap[$varName];
+                }
+            }
+
+            $docComment = $stmt->getDocComment();
+            if ($docComment !== null) {
+                $syntheticExpr = $this->resolveExprFromDocComment($docComment->getText(), null, $useMap);
+                if ($syntheticExpr !== null) {
+                    $rhsExpr = $syntheticExpr;
+                }
+            }
+
+            $properties[$propName][] = $rhsExpr;
+        }
+
+        return $properties;
+    }
+
+    /**
+     * Builds a map of local variable name to RHS Expr, respecting @var doc comments.
+     *
+     * @param  array<string, string>  $useMap
+     * @return array<string, Expr>
+     */
+    private function buildLocalVarExprMap(Closure $closure, array $useMap): array
+    {
+        $map = [];
+
+        foreach ($closure->stmts as $stmt) {
+            if (! $stmt instanceof Expression) {
+                continue;
+            }
+
+            $expr = $stmt->expr;
+            if (! $expr instanceof Assign) {
+                continue;
+            }
+
+            $var = $expr->var;
+            if (! $var instanceof Variable || ! is_string($var->name)) {
+                continue;
+            }
+
+            $varName = $var->name;
+            $docComment = $stmt->getDocComment();
+
+            if ($docComment !== null) {
+                $syntheticExpr = $this->resolveExprFromDocComment($docComment->getText(), $varName, $useMap);
+                if ($syntheticExpr !== null) {
+                    $map[$varName] = $syntheticExpr;
+                    continue;
+                }
+            }
+
+            $map[$varName] = $expr->expr;
+        }
+
+        return $map;
+    }
+
+    /**
+     * Parses a @var doc comment and returns a synthetic Expr for the type, if resolvable.
+     *
+     * @param  array<string, string>  $useMap
+     */
+    private function resolveExprFromDocComment(string $docText, ?string $varName, array $useMap): ?Expr
+    {
+        if (! preg_match('/@var\s+([\\\\\w]+)(?:\s+\$(\w+))?/', $docText, $matches)) {
+            return null;
+        }
+
+        $typeName = $matches[1];
+        $docVarName = $matches[2] ?? null;
+
+        if ($varName !== null && $docVarName !== null && $docVarName !== $varName) {
+            return null;
+        }
+
+        return $this->buildSyntheticExprFromTypeName($typeName, $useMap);
+    }
+
+    /**
+     * Builds a New_ node for a class type name resolved through the use map.
+     *
+     * @param  array<string, string>  $useMap
+     */
+    private function buildSyntheticExprFromTypeName(string $typeName, array $useMap): ?Expr
+    {
+        $fqcn = $useMap[$typeName] ?? $typeName;
+
+        $builtIns = ['string', 'int', 'float', 'bool', 'null', 'array', 'object', 'mixed', 'void', 'never'];
+        if (in_array(strtolower($fqcn), $builtIns, true)) {
+            return null;
+        }
+
+        return new New_(new FullyQualified($fqcn));
     }
 
     /**

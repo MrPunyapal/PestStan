@@ -163,6 +163,7 @@ function testBeforeEachFloatLiteral(): void
 function testBeforeEachVarAnnotation(): void
 {
     beforeEach(function (): void {
+        /** @var Post $post */
         $this->post = Post::factory()->create();
     });
 
@@ -174,6 +175,7 @@ function testBeforeEachVarAnnotation(): void
 function testBeforeEachVarAnnotationWithoutVarName(): void
 {
     beforeEach(function (): void {
+        /** @var Author */
         $this->author = Author::factory()->create();
     });
 
