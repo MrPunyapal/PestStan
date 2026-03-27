@@ -51,7 +51,7 @@ function testBeforeEachStringLiteral(): void
     });
 
     it('resolves string type from beforeEach', function (): void {
-        assertType('string', $this->name);
+        assertType("'test'", $this->name);
     });
 }
 
@@ -62,7 +62,7 @@ function testBeforeEachIntLiteral(): void
     });
 
     it('resolves int type from beforeEach', function (): void {
-        assertType('int', $this->count);
+        assertType('42', $this->count);
     });
 }
 
@@ -95,7 +95,7 @@ function testBeforeEachArrayLiteral(): void
     });
 
     it('resolves array type from beforeEach', function (): void {
-        assertType('array', $this->items);
+        assertType('array{}', $this->items);
     });
 }
 
@@ -156,7 +156,7 @@ function testBeforeEachFloatLiteral(): void
     });
 
     it('resolves float type from beforeEach', function (): void {
-        assertType('float', $this->price);
+        assertType('9.99', $this->price);
     });
 }
 
@@ -193,6 +193,17 @@ function testBeforeEachVarAnnotationOnLocalVar(): void
     });
 
     it('resolves property type from @var-annotated local variable', function (): void {
+        assertType(Post::class, $this->post);
+    });
+}
+
+function testBeforeEachMethodCallChain(): void
+{
+    beforeEach(function (): void {
+        $this->post = Post::make();
+    });
+
+    it('resolves property type from method call chain without annotation', function (): void {
         assertType(Post::class, $this->post);
     });
 }

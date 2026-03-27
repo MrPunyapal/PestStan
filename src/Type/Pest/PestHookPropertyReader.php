@@ -18,6 +18,7 @@ use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
@@ -28,29 +29,18 @@ use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
-use PHPStan\Type\ArrayType;
-use PHPStan\Type\BooleanType;
-use PHPStan\Type\Constant\ConstantBooleanType;
-use PHPStan\Type\FloatType;
-use PHPStan\Type\IntegerType;
-use PHPStan\Type\MixedType;
-use PHPStan\Type\NullType;
-use PHPStan\Type\ObjectType;
-use PHPStan\Type\StringType;
-use PHPStan\Type\Type;
-use PHPStan\Type\TypeCombinator;
 
 /**
- * Parses test files and Pest.php config files to extract dynamic property types from beforeEach/beforeAll hooks.
+ * Parses test files and Pest.php config files to extract dynamic property expressions from beforeEach/beforeAll hooks.
  */
 final class PestHookPropertyReader
 {
     private const HOOK_FUNCTIONS = ['beforeEach', 'beforeAll'];
 
-    /** @var array<string, array<string, Type>> Maps normalized file paths to property name → Type */
+    /** @var array<string, array<string, list<Expr>>> Maps normalized file paths to property name → list of RHS Exprs */
     private array $filePropertyCache = [];
 
-    /** @var array<string, array<string, Type>> Maps normalized directory paths to property name → Type */
+    /** @var array<string, array<string, list<Expr>>> Maps normalized directory paths to property name → list of RHS Exprs */
     private array $directoryPropertyMap = [];
 
     private bool $pestFilesParsed = false;
@@ -63,11 +53,11 @@ final class PestHookPropertyReader
     ) {}
 
     /**
-     * Returns property types resolved from hook closures for the given file.
+     * Returns property expressions from hook closures for the given file, to be resolved via Scope::getType().
      *
-     * @return array<string, Type>
+     * @return array<string, list<Expr>>
      */
-    public function getPropertyTypes(string $filePath): array
+    public function getPropertyExprs(string $filePath): array
     {
         $this->ensurePestFilesParsed();
 
@@ -80,8 +70,12 @@ final class PestHookPropertyReader
         $properties = $this->filePropertyCache[$normalizedFile];
 
         $directoryProperties = $this->resolveDirectoryProperties($filePath);
-        foreach ($directoryProperties as $name => $type) {
-            $properties[$name] = isset($properties[$name]) ? TypeCombinator::union($properties[$name], $type) : $type;
+        foreach ($directoryProperties as $name => $exprs) {
+            if (isset($properties[$name])) {
+                $properties[$name] = array_merge($properties[$name], $exprs);
+            } else {
+                $properties[$name] = $exprs;
+            }
         }
 
         return $properties;
@@ -90,7 +84,7 @@ final class PestHookPropertyReader
     /**
      * Resolves directory-scoped properties from Pest.php beforeEach hooks.
      *
-     * @return array<string, Type>
+     * @return array<string, list<Expr>>
      */
     private function resolveDirectoryProperties(string $filePath): array
     {
@@ -204,7 +198,7 @@ final class PestHookPropertyReader
     }
 
     /**
-     * Extracts property types from uses()->beforeEach(Closure)->in() chains.
+     * Extracts property expressions from uses()->beforeEach(Closure)->in() chains.
      *
      * @param  Node[]  $stmts
      * @param  array<string, string>  $useMap
@@ -304,28 +298,28 @@ final class PestHookPropertyReader
     }
 
     /**
-     * Merges property types into the directory property map.
+     * Merges property expressions into the directory property map.
      *
-     * @param  array<string, Type>  $properties
+     * @param  array<string, list<Expr>>  $properties
      */
     private function mergeDirectoryProperties(string $directory, array $properties): void
     {
-        foreach ($properties as $name => $type) {
+        foreach ($properties as $name => $exprs) {
             if (isset($this->directoryPropertyMap[$directory][$name])) {
-                $this->directoryPropertyMap[$directory][$name] = TypeCombinator::union(
+                $this->directoryPropertyMap[$directory][$name] = array_merge(
                     $this->directoryPropertyMap[$directory][$name],
-                    $type,
+                    $exprs,
                 );
             } else {
-                $this->directoryPropertyMap[$directory][$name] = $type;
+                $this->directoryPropertyMap[$directory][$name] = $exprs;
             }
         }
     }
 
     /**
-     * Parses a test file to extract property types from hook closures.
+     * Parses a test file to extract property expressions from hook closures.
      *
-     * @return array<string, Type>
+     * @return array<string, list<Expr>>
      */
     private function parseTestFile(string $filePath): array
     {
@@ -358,8 +352,12 @@ final class PestHookPropertyReader
             }
 
             $hookProperties = $this->extractPropertyAssignments($closure, $useMap);
-            foreach ($hookProperties as $name => $type) {
-                $properties[$name] = isset($properties[$name]) ? TypeCombinator::union($properties[$name], $type) : $type;
+            foreach ($hookProperties as $name => $exprs) {
+                if (isset($properties[$name])) {
+                    $properties[$name] = array_merge($properties[$name], $exprs);
+                } else {
+                    $properties[$name] = $exprs;
+                }
             }
         }
 
@@ -367,15 +365,15 @@ final class PestHookPropertyReader
     }
 
     /**
-     * Extracts $this->property = value assignments from a closure body, resolving types from AST or @var PHPDoc.
+     * Extracts $this->property = value assignments from a closure body, storing the RHS Expr for later scope-aware resolution.
      *
      * @param  array<string, string>  $useMap
-     * @return array<string, Type>
+     * @return array<string, list<Expr>>
      */
     private function extractPropertyAssignments(Closure $closure, array $useMap): array
     {
         $properties = [];
-        $localVarTypes = $this->buildLocalVarTypeMap($closure, $useMap);
+        $localVarExprs = $this->buildLocalVarExprMap($closure, $useMap);
 
         foreach ($closure->stmts ?? [] as $stmt) {
             if (! $stmt instanceof Expression) {
@@ -406,39 +404,28 @@ final class PestHookPropertyReader
 
             $propertyName = $propertyFetch->name->name;
 
-            $type = $this->resolveTypeFromDocComment($stmt->getDocComment(), $propertyName, $useMap)
-                ?? $this->resolveLocalVarType($assign->expr, $localVarTypes)
-                ?? $this->resolveExpressionType($assign->expr, $useMap);
+            $resolvedExpr = $this->resolveExprFromDocComment($stmt->getDocComment(), $propertyName, $useMap)
+                ?? $this->resolveLocalVarExpr($assign->expr, $localVarExprs)
+                ?? $assign->expr;
 
-            if ($type instanceof MixedType) {
-                continue;
-            }
-
-            $properties[$propertyName] = isset($properties[$propertyName])
-                ? TypeCombinator::union($properties[$propertyName], $type)
-                : $type;
+            $properties[$propertyName][] = $resolvedExpr;
         }
 
         return $properties;
     }
 
     /**
-     * Builds a map of local variable names to their types from @var PHPDoc annotations in a closure.
+     * Builds a map of local variable names to their RHS Expr, with @var annotation overrides for synthetic type hints.
      *
      * @param  array<string, string>  $useMap
-     * @return array<string, Type>
+     * @return array<string, Expr>
      */
-    private function buildLocalVarTypeMap(Closure $closure, array $useMap): array
+    private function buildLocalVarExprMap(Closure $closure, array $useMap): array
     {
-        $localVarTypes = [];
+        $localVarExprs = [];
 
         foreach ($closure->stmts ?? [] as $stmt) {
             if (! $stmt instanceof Expression) {
-                continue;
-            }
-
-            $docComment = $stmt->getDocComment();
-            if ($docComment === null) {
                 continue;
             }
 
@@ -458,26 +445,28 @@ final class PestHookPropertyReader
                 continue;
             }
 
-            if (! preg_match('/@var\s+([\w\\\\]+)\s+\$(\w+)/', $docComment->getText(), $matches)) {
-                continue;
+            $docComment = $stmt->getDocComment();
+
+            if ($docComment !== null && preg_match('/@var\s+([\w\\\\]+)\s+\$(\w+)/', $docComment->getText(), $matches) && $matches[2] === $varName) {
+                $syntheticExpr = $this->buildSyntheticExprFromTypeName($matches[1], $useMap);
+                if ($syntheticExpr !== null) {
+                    $localVarExprs[$varName] = $syntheticExpr;
+                    continue;
+                }
             }
 
-            if ($matches[2] !== $varName) {
-                continue;
-            }
-
-            $localVarTypes[$varName] = $this->resolveTypeFromString($matches[1], $useMap);
+            $localVarExprs[$varName] = $assign->expr;
         }
 
-        return $localVarTypes;
+        return $localVarExprs;
     }
 
     /**
-     * Resolves the type of a local variable reference from the local var type map.
+     * Resolves a local variable reference to its stored RHS Expr.
      *
-     * @param  array<string, Type>  $localVarTypes
+     * @param  array<string, Expr>  $localVarExprs
      */
-    private function resolveLocalVarType(Expr $expr, array $localVarTypes): ?Type
+    private function resolveLocalVarExpr(Expr $expr, array $localVarExprs): ?Expr
     {
         if (! $expr instanceof Variable) {
             return null;
@@ -488,15 +477,15 @@ final class PestHookPropertyReader
             return null;
         }
 
-        return $localVarTypes[$varName] ?? null;
+        return $localVarExprs[$varName] ?? null;
     }
 
     /**
-     * Resolves a type from a @var PHPDoc comment for the given property name.
+     * Builds a synthetic Expr from a @var PHPDoc comment for the given property name.
      *
      * @param  array<string, string>  $useMap
      */
-    private function resolveTypeFromDocComment(?Doc $docComment, string $propertyName, array $useMap): ?Type
+    private function resolveExprFromDocComment(?Doc $docComment, string $propertyName, array $useMap): ?Expr
     {
         if ($docComment === null) {
             return null;
@@ -506,32 +495,31 @@ final class PestHookPropertyReader
             return null;
         }
 
-        $annotatedType = $matches[1];
         $annotatedVar = $matches[2] ?? null;
 
         if ($annotatedVar !== null && $annotatedVar !== $propertyName) {
             return null;
         }
 
-        return $this->resolveTypeFromString($annotatedType, $useMap);
+        return $this->buildSyntheticExprFromTypeName($matches[1], $useMap);
     }
 
     /**
-     * Resolves a PHPStan Type from a type name string using the file's use map.
+     * Creates a synthetic Expr node from a type name that Scope::getType() resolves to the intended type.
      *
      * @param  array<string, string>  $useMap
      */
-    private function resolveTypeFromString(string $typeName, array $useMap): Type
+    private function buildSyntheticExprFromTypeName(string $typeName, array $useMap): ?Expr
     {
         return match (strtolower($typeName)) {
-            'string' => new StringType,
-            'int', 'integer' => new IntegerType,
-            'float', 'double' => new FloatType,
-            'bool', 'boolean' => new BooleanType,
-            'null' => new NullType,
-            'array' => new ArrayType(new MixedType, new MixedType),
-            'mixed' => new MixedType,
-            default => new ObjectType($this->resolveFqcn($typeName, $useMap)),
+            'string' => new String_(''),
+            'int', 'integer' => new Int_(0),
+            'float', 'double' => new Float_(0.0),
+            'bool', 'boolean' => new ConstFetch(new Name\FullyQualified('true')),
+            'null' => new ConstFetch(new Name\FullyQualified('null')),
+            'array' => new Array_([]),
+            'mixed', '' => null,
+            default => new New_(new FullyQualified($this->resolveFqcn($typeName, $useMap))),
         };
     }
 
@@ -557,65 +545,6 @@ final class PestHookPropertyReader
         }
 
         return $name;
-    }
-
-    /**
-     * Resolves the PHPStan Type from an AST expression.
-     *
-     * @param  array<string, string>  $useMap
-     */
-    private function resolveExpressionType(Expr $expr, array $useMap): Type
-    {
-        if ($expr instanceof New_) {
-            return $this->resolveNewType($expr);
-        }
-
-        if ($expr instanceof String_) {
-            return new StringType;
-        }
-
-        if ($expr instanceof Int_) {
-            return new IntegerType;
-        }
-
-        if ($expr instanceof Float_) {
-            return new FloatType;
-        }
-
-        if ($expr instanceof ConstFetch) {
-            return $this->resolveConstFetchType($expr);
-        }
-
-        if ($expr instanceof Array_) {
-            return new ArrayType(new MixedType, new MixedType);
-        }
-
-        return new MixedType;
-    }
-
-    /**
-     * Resolves the type of a `new ClassName(...)` expression.
-     */
-    private function resolveNewType(New_ $expr): Type
-    {
-        if ($expr->class instanceof Name) {
-            return new ObjectType($expr->class->toString());
-        }
-
-        return new MixedType;
-    }
-
-    /**
-     * Resolves the type of a constant fetch (true, false, null).
-     */
-    private function resolveConstFetchType(ConstFetch $expr): Type
-    {
-        return match ($expr->name->toLowerString()) {
-            'true' => new ConstantBooleanType(true),
-            'false' => new ConstantBooleanType(false),
-            'null' => new NullType,
-            default => new MixedType,
-        };
     }
 
     /**

@@ -8,9 +8,13 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Identifier;
 use PHPStan\Analyser\Scope;
+use PHPStan\Type\ErrorType;
 use PHPStan\Type\ExpressionTypeResolverExtension;
+use PHPStan\Type\MixedType;
+use PHPStan\Type\NeverType;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
+use PHPStan\Type\TypeCombinator;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -45,9 +49,26 @@ final class TestCaseDynamicPropertyTypeExtension implements ExpressionTypeResolv
             return null;
         }
 
-        $propertyTypes = $this->hookPropertyReader->getPropertyTypes($scope->getFile());
+        $propertyExprs = $this->hookPropertyReader->getPropertyExprs($scope->getFile());
 
-        return $propertyTypes[$propertyName] ?? null;
+        if (! isset($propertyExprs[$propertyName])) {
+            return null;
+        }
+
+        $types = [];
+        foreach ($propertyExprs[$propertyName] as $rhsExpr) {
+            $resolved = $scope->getType($rhsExpr);
+            if ($resolved instanceof ErrorType || $resolved instanceof NeverType || $resolved instanceof MixedType) {
+                continue;
+            }
+            $types[] = $resolved;
+        }
+
+        if ($types === []) {
+            return null;
+        }
+
+        return TypeCombinator::union(...$types);
     }
 
     /**
