@@ -222,22 +222,6 @@ final class PestHookPropertyReader
     }
 
     /**
-     * Checks if a method call chain contains a specific node.
-     */
-    private function chainContainsNode(Expr $expr, MethodCall $target): bool
-    {
-        if ($expr === $target) {
-            return true;
-        }
-
-        if ($expr instanceof MethodCall) {
-            return $this->chainContainsNode($expr->var, $target);
-        }
-
-        return false;
-    }
-
-    /**
      * Parses a test file to extract property expressions from hook closures.
      *
      * @return array<string, list<Expr>>
