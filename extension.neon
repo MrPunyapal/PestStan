@@ -61,6 +61,11 @@ services:
             - phpstan.ignoreErrorExtension
 
     -
+        class: PestStan\Type\Pest\TestCallMethodIgnoreExtension
+        tags:
+            - phpstan.ignoreErrorExtension
+
+    -
         class: PestStan\Type\Pest\ProtectedMethodCallIgnoreExtension
         arguments:
             testCaseClass: %peststan.testCaseClass%
