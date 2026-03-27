@@ -45,3 +45,9 @@ test('higher order expectation types', function (string $assertType, string $fil
 })->with(function (): Iterator {
     yield from TestCase::gatherAssertTypes(__DIR__ . '/data/higher-order-expectations.php');
 });
+
+test('hook property types', function (string $assertType, string $file, mixed ...$args): void {
+    $this->assertFileAsserts($assertType, $file, ...$args);
+})->with(function (): Iterator {
+    yield from TestCase::gatherAssertTypes(__DIR__ . '/data/test-hook-properties.php');
+});
