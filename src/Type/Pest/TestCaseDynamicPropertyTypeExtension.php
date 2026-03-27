@@ -58,9 +58,18 @@ final class TestCaseDynamicPropertyTypeExtension implements ExpressionTypeResolv
         $types = [];
         foreach ($propertyExprs[$propertyName] as $rhsExpr) {
             $resolved = $scope->getType($rhsExpr);
-            if ($resolved instanceof ErrorType || $resolved instanceof NeverType || $resolved instanceof MixedType) {
+            if ($resolved instanceof ErrorType) {
                 continue;
             }
+
+            if ($resolved instanceof NeverType) {
+                continue;
+            }
+
+            if ($resolved instanceof MixedType) {
+                continue;
+            }
+
             $types[] = $resolved;
         }
 
