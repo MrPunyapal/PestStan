@@ -61,9 +61,9 @@ services:
             - phpstan.ignoreErrorExtension
 
     -
-        class: PestStan\Type\Pest\TestCallMethodIgnoreExtension
+        class: PestStan\Type\Pest\TestCallMethodsClassReflectionExtension
         tags:
-            - phpstan.ignoreErrorExtension
+            - phpstan.broker.methodsClassReflectionExtension
 
     -
         class: PestStan\Type\Pest\ProtectedMethodCallIgnoreExtension
