@@ -13,23 +13,23 @@ use PHPStan\Analyser\Scope;
 
 final class PestInternalClassAccessIgnoreExtension implements IgnoreErrorExtension
 {
+    private const SUPPRESSED_IDENTIFIERS = [
+        'property.internalClass',
+        'method.internalClass',
+        'method.internalTrait',
+    ];
+
     public function shouldIgnore(Error $error, Node $node, Scope $scope): bool
     {
-        $identifier = $error->getIdentifier();
-
-        if ($identifier === 'property.internalClass' && $node instanceof PropertyFetch) {
-            return $this->isPestInternalType($scope->getType($node->var)->getReferencedClasses());
+        if (! in_array($error->getIdentifier(), self::SUPPRESSED_IDENTIFIERS, true)) {
+            return false;
         }
 
-        if ($identifier === 'method.internalClass' && $node instanceof MethodCall) {
-            return $this->isPestInternalType($scope->getType($node->var)->getReferencedClasses());
+        if (! $node instanceof MethodCall && ! $node instanceof PropertyFetch) {
+            return false;
         }
 
-        if ($identifier === 'method.internalTrait' && $node instanceof MethodCall) {
-            return $this->isPestInternalType($scope->getType($node->var)->getReferencedClasses());
-        }
-
-        return false;
+        return $this->isPestInternalType($scope->getType($node->var)->getReferencedClasses());
     }
 
     /** @param list<non-empty-string> $classes */
