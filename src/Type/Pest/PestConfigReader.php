@@ -110,17 +110,7 @@ final class PestConfigReader
                 continue;
             }
 
-            $directories = $this->extractInDirectories($methodCall);
-            if ($directories === []) {
-                $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
-
-                continue;
-            }
-
-            foreach ($directories as $dir) {
-                $fullPath = $this->fileDiscoverer->normalizePath($pestFileDir . '/' . $dir) . '/';
-                $this->directoryMap[$fullPath] = $className;
-            }
+            $this->registerDirectoryBindings($className, $methodCall, $pestFileDir);
         }
 
         $funcCalls = $nodeFinder->findInstanceOf($stmts, FuncCall::class);
@@ -159,17 +149,7 @@ final class PestConfigReader
                 continue;
             }
 
-            $directories = $this->extractInDirectories($methodCall);
-            if ($directories === []) {
-                $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
-
-                continue;
-            }
-
-            foreach ($directories as $dir) {
-                $fullPath = $this->fileDiscoverer->normalizePath($pestFileDir . '/' . $dir) . '/';
-                $this->directoryMap[$fullPath] = $className;
-            }
+            $this->registerDirectoryBindings($className, $methodCall, $pestFileDir);
         }
 
         foreach ($methodCalls as $methodCall) {
@@ -254,6 +234,25 @@ final class PestConfigReader
         }
 
         return $directories;
+    }
+
+    /**
+     * Maps a class name to directories from an ->in() method call.
+     */
+    private function registerDirectoryBindings(string $className, MethodCall $inMethodCall, string $pestFileDir): void
+    {
+        $directories = $this->extractInDirectories($inMethodCall);
+
+        if ($directories === []) {
+            $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
+
+            return;
+        }
+
+        foreach ($directories as $dir) {
+            $fullPath = $this->fileDiscoverer->normalizePath($pestFileDir . '/' . $dir) . '/';
+            $this->directoryMap[$fullPath] = $className;
+        }
     }
 
     /**

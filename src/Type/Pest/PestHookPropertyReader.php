@@ -57,9 +57,7 @@ final class PestHookPropertyReader
         $properties = $this->filePropertyCache[$normalizedFile];
 
         $directoryProperties = $this->resolveDirectoryProperties($filePath);
-        foreach ($directoryProperties as $name => $exprs) {
-            $properties[$name] = isset($properties[$name]) ? array_merge($properties[$name], $exprs) : $exprs;
-        }
+        $this->mergePropertyExprs($properties, $directoryProperties);
 
         return $properties;
     }
@@ -152,18 +150,27 @@ final class PestHookPropertyReader
                 }
 
                 $assigned = $this->extractPropertyAssignments($arg->value, $useMap);
-                foreach ($assigned as $name => $exprs) {
-                    if (! isset($this->directoryPropertyMap[$directoryPath][$name])) {
-                        $this->directoryPropertyMap[$directoryPath][$name] = [];
-                    }
-
-                    foreach ($exprs as $expr) {
-                        $this->directoryPropertyMap[$directoryPath][$name][] = $expr;
-                    }
+                if (! isset($this->directoryPropertyMap[$directoryPath])) {
+                    $this->directoryPropertyMap[$directoryPath] = [];
                 }
+
+                $this->mergePropertyExprs($this->directoryPropertyMap[$directoryPath], $assigned);
 
                 break;
             }
+        }
+    }
+
+    /**
+     * Merges source property expressions into the target map.
+     *
+     * @param  array<string, list<Expr>>  $target
+     * @param  array<string, list<Expr>>  $source
+     */
+    private function mergePropertyExprs(array &$target, array $source): void
+    {
+        foreach ($source as $name => $exprs) {
+            $target[$name] = isset($target[$name]) ? array_merge($target[$name], $exprs) : $exprs;
         }
     }
 
@@ -219,15 +226,7 @@ final class PestHookPropertyReader
                 }
 
                 $assigned = $this->extractPropertyAssignments($arg->value, $useMap);
-                foreach ($assigned as $name => $exprs) {
-                    if (! isset($properties[$name])) {
-                        $properties[$name] = [];
-                    }
-
-                    foreach ($exprs as $expr) {
-                        $properties[$name][] = $expr;
-                    }
-                }
+                $this->mergePropertyExprs($properties, $assigned);
 
                 break;
             }

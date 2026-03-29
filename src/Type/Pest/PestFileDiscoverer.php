@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Type\Pest;
 
+use FilesystemIterator;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
@@ -13,6 +14,9 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use UnexpectedValueException;
 
 /**
  * Shared utilities for discovering Pest.php files, parsing PHP files, and normalizing paths.
@@ -102,37 +106,29 @@ final class PestFileDiscoverer
     }
 
     /**
-     * Recursively finds Pest.php files in a directory.
+     * Recursively finds Pest.php files in a directory using SPL iterators.
      *
      * @param  string[]  $results
      */
     private function findPestFilesInDirectory(string $directory, array &$results): void
     {
-        $pestFile = $directory . DIRECTORY_SEPARATOR . 'Pest.php';
-        if (is_file($pestFile)) {
-            $realPath = realpath($pestFile);
-            if ($realPath !== false) {
-                $results[] = $realPath;
-            }
-        }
-
-        $entries = scandir($directory);
-        if ($entries === false) {
+        try {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
+            );
+        } catch (UnexpectedValueException) {
             return;
         }
 
-        foreach ($entries as $entry) {
-            if ($entry === '.') {
+        /** @var \SplFileInfo $file */
+        foreach ($iterator as $file) {
+            if ($file->getFilename() !== 'Pest.php' || ! $file->isFile()) {
                 continue;
             }
 
-            if ($entry === '..') {
-                continue;
-            }
-
-            $path = $directory . DIRECTORY_SEPARATOR . $entry;
-            if (is_dir($path)) {
-                $this->findPestFilesInDirectory($path, $results);
+            $realPath = realpath($file->getPathname());
+            if ($realPath !== false) {
+                $results[] = $realPath;
             }
         }
     }
