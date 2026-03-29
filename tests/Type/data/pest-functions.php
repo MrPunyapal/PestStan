@@ -45,3 +45,13 @@ function testAfterEachReturnType(): void
 {
     assertType(AfterEachCall::class, afterEach(function (): void {}));
 }
+
+function testBeforeAllReturnType(): void
+{
+    assertType('null', beforeAll(function (): void {}));
+}
+
+function testAfterAllReturnType(): void
+{
+    assertType('null', afterAll(function (): void {}));
+}

@@ -14,9 +14,6 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeFinder;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\ParserFactory;
 
 /**
  * Parses Pest.php config files to resolve which TestCase class is bound via uses() or pest()->extend().
@@ -30,11 +27,10 @@ final class PestConfigReader
 
     /**
      * @param  string[]  $pestConfigFiles  Explicit Pest.php file paths from config
-     * @param  string[]  $scanPaths  PHPStan's configured analysis paths to auto-discover Pest.php files
      */
     public function __construct(
         private readonly array $pestConfigFiles,
-        private readonly array $scanPaths,
+        private readonly PestFileDiscoverer $fileDiscoverer,
     ) {}
 
     /**
@@ -44,7 +40,7 @@ final class PestConfigReader
     {
         $this->ensureParsed();
 
-        $normalizedFile = $this->normalizePath($filePath);
+        $normalizedFile = $this->fileDiscoverer->normalizePath($filePath);
 
         $bestMatch = null;
         $bestLength = 0;
@@ -72,97 +68,21 @@ final class PestConfigReader
 
         $this->parsed = true;
 
-        $pestFiles = $this->discoverPestFiles();
+        $pestFiles = $this->fileDiscoverer->discoverPestFiles($this->pestConfigFiles);
 
         foreach ($pestFiles as $pestFile) {
             $this->parsePestFile($pestFile);
         }
     }
 
-    /**
-     * Discovers Pest.php files from explicit config and auto-scan paths.
-     *
-     * @return string[]
-     */
-    private function discoverPestFiles(): array
-    {
-        $files = [];
-
-        foreach ($this->pestConfigFiles as $configFile) {
-            $realPath = realpath($configFile);
-            if ($realPath !== false && is_file($realPath)) {
-                $files[] = $realPath;
-            }
-        }
-
-        foreach ($this->scanPaths as $scanPath) {
-            $realPath = realpath($scanPath);
-            if ($realPath === false) {
-                continue;
-            }
-
-            $dir = is_file($realPath) ? dirname($realPath) : $realPath;
-
-            $this->findPestFilesInDirectory($dir, $files);
-        }
-
-        return array_unique($files);
-    }
-
-    /**
-     * Recursively finds Pest.php files in a directory.
-     *
-     * @param  string[]  $results
-     */
-    private function findPestFilesInDirectory(string $directory, array &$results): void
-    {
-        $pestFile = $directory . DIRECTORY_SEPARATOR . 'Pest.php';
-        if (is_file($pestFile)) {
-            $realPath = realpath($pestFile);
-            if ($realPath !== false) {
-                $results[] = $realPath;
-            }
-        }
-
-        $entries = scandir($directory);
-        if ($entries === false) {
-            return;
-        }
-
-        foreach ($entries as $entry) {
-            if ($entry === '.') {
-                continue;
-            }
-
-            if ($entry === '..') {
-                continue;
-            }
-
-            $path = $directory . DIRECTORY_SEPARATOR . $entry;
-            if (is_dir($path)) {
-                $this->findPestFilesInDirectory($path, $results);
-            }
-        }
-    }
-
     private function parsePestFile(string $filePath): void
     {
-        $content = file_get_contents($filePath);
-        if ($content === false) {
+        $parsed = $this->fileDiscoverer->parseFile($filePath);
+        if ($parsed === null) {
             return;
         }
 
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $stmts = $parser->parse($content);
-
-        if ($stmts === null) {
-            return;
-        }
-
-        $traverser = new NodeTraverser;
-        $traverser->addVisitor(new NameResolver);
-
-        $stmts = $traverser->traverse($stmts);
+        [$stmts] = $parsed;
 
         $nodeFinder = new NodeFinder;
         $pestFileDir = dirname($filePath);
@@ -181,7 +101,7 @@ final class PestConfigReader
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
         foreach ($methodCalls as $methodCall) {
-            if (! $this->isMethodNamed($methodCall, 'in')) {
+            if (! $this->fileDiscoverer->isMethodNamed($methodCall, 'in')) {
                 continue;
             }
 
@@ -190,34 +110,22 @@ final class PestConfigReader
                 continue;
             }
 
-            $directories = $this->extractInDirectories($methodCall);
-            if ($directories === []) {
-                $this->directoryMap[$this->normalizePath($pestFileDir) . '/'] = $className;
-
-                continue;
-            }
-
-            foreach ($directories as $dir) {
-                $fullPath = $this->normalizePath($pestFileDir . '/' . $dir) . '/';
-                $this->directoryMap[$fullPath] = $className;
-            }
+            $this->registerDirectoryBindings($className, $methodCall, $pestFileDir);
         }
 
-        // Handle uses(TestCase::class) without ->in() — applies to whole directory
         $funcCalls = $nodeFinder->findInstanceOf($stmts, FuncCall::class);
         foreach ($funcCalls as $funcCall) {
             if (! $this->isFuncNamed($funcCall, 'uses')) {
                 continue;
             }
 
-            // Skip if this uses() call has ->in() chained (already handled above)
             if ($this->hasInChain($funcCall, $stmts, $nodeFinder)) {
                 continue;
             }
 
             $className = $this->extractFirstClassArg($funcCall);
             if ($className !== null) {
-                $this->directoryMap[$this->normalizePath($pestFileDir) . '/'] = $className;
+                $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
             }
         }
     }
@@ -232,7 +140,7 @@ final class PestConfigReader
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
         foreach ($methodCalls as $methodCall) {
-            if (! $this->isMethodNamed($methodCall, 'in')) {
+            if (! $this->fileDiscoverer->isMethodNamed($methodCall, 'in')) {
                 continue;
             }
 
@@ -241,22 +149,11 @@ final class PestConfigReader
                 continue;
             }
 
-            $directories = $this->extractInDirectories($methodCall);
-            if ($directories === []) {
-                $this->directoryMap[$this->normalizePath($pestFileDir) . '/'] = $className;
-
-                continue;
-            }
-
-            foreach ($directories as $dir) {
-                $fullPath = $this->normalizePath($pestFileDir . '/' . $dir) . '/';
-                $this->directoryMap[$fullPath] = $className;
-            }
+            $this->registerDirectoryBindings($className, $methodCall, $pestFileDir);
         }
 
-        // Handle pest()->extend(TestCase::class) without ->in()
         foreach ($methodCalls as $methodCall) {
-            if (! $this->isMethodNamed($methodCall, 'extend')) {
+            if (! $this->fileDiscoverer->isMethodNamed($methodCall, 'extend')) {
                 continue;
             }
 
@@ -264,14 +161,13 @@ final class PestConfigReader
                 continue;
             }
 
-            // Skip if this extend() has ->in() chained (already handled above)
             if ($this->isPartOfInChain($methodCall, $stmts, $nodeFinder)) {
                 continue;
             }
 
             $className = $this->extractFirstClassArg($methodCall);
             if ($className !== null) {
-                $this->directoryMap[$this->normalizePath($pestFileDir) . '/'] = $className;
+                $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
             }
         }
     }
@@ -300,7 +196,7 @@ final class PestConfigReader
     private function resolvePestExtendClassName(Expr $expr): ?string
     {
         // Direct: pest()->extend(X::class)->in(...)
-        if ($expr instanceof MethodCall && $this->isMethodNamed($expr, 'extend') && $this->isPestFuncCall($expr->var)) {
+        if ($expr instanceof MethodCall && $this->fileDiscoverer->isMethodNamed($expr, 'extend') && $this->isPestFuncCall($expr->var)) {
             return $this->extractFirstClassArg($expr);
         }
 
@@ -341,6 +237,25 @@ final class PestConfigReader
     }
 
     /**
+     * Maps a class name to directories from an ->in() method call.
+     */
+    private function registerDirectoryBindings(string $className, MethodCall $inMethodCall, string $pestFileDir): void
+    {
+        $directories = $this->extractInDirectories($inMethodCall);
+
+        if ($directories === []) {
+            $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
+
+            return;
+        }
+
+        foreach ($directories as $dir) {
+            $fullPath = $this->fileDiscoverer->normalizePath($pestFileDir . '/' . $dir) . '/';
+            $this->directoryMap[$fullPath] = $className;
+        }
+    }
+
+    /**
      * Extracts the class name from the first argument of a function/method call (e.g., uses(TestCase::class)).
      */
     private function extractFirstClassArg(FuncCall|MethodCall $call): ?string
@@ -363,11 +278,6 @@ final class PestConfigReader
         return null;
     }
 
-    private function isMethodNamed(MethodCall $methodCall, string $name): bool
-    {
-        return $methodCall->name instanceof Identifier && $methodCall->name->toString() === $name;
-    }
-
     private function isFuncNamed(FuncCall $funcCall, string $name): bool
     {
         return $funcCall->name instanceof Name && $funcCall->name->toString() === $name;
@@ -383,12 +293,11 @@ final class PestConfigReader
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
         foreach ($methodCalls as $methodCall) {
-            if (! $this->isMethodNamed($methodCall, 'in')) {
+            if (! $this->fileDiscoverer->isMethodNamed($methodCall, 'in')) {
                 continue;
             }
 
-            // Check if this chain includes our funcCall by identity
-            if ($this->resolveUsesClassName($methodCall->var) !== null && $this->chainContainsFuncCall($methodCall->var, $funcCall)) {
+            if ($this->resolveUsesClassName($methodCall->var) !== null && $this->chainContainsNode($methodCall->var, $funcCall)) {
                 return true;
             }
         }
@@ -406,11 +315,11 @@ final class PestConfigReader
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
         foreach ($methodCalls as $methodCall) {
-            if (! $this->isMethodNamed($methodCall, 'in')) {
+            if (! $this->fileDiscoverer->isMethodNamed($methodCall, 'in')) {
                 continue;
             }
 
-            if ($this->chainContainsMethodCall($methodCall->var, $extendCall)) {
+            if ($this->chainContainsNode($methodCall->var, $extendCall)) {
                 return true;
             }
         }
@@ -418,39 +327,19 @@ final class PestConfigReader
         return false;
     }
 
-    private function chainContainsFuncCall(Expr $expr, FuncCall $target): bool
+    /**
+     * Walks the call chain to check if a target node is present (by identity).
+     */
+    private function chainContainsNode(Expr $expr, Expr $target): bool
     {
         if ($expr === $target) {
             return true;
         }
 
         if ($expr instanceof MethodCall) {
-            return $this->chainContainsFuncCall($expr->var, $target);
+            return $this->chainContainsNode($expr->var, $target);
         }
 
         return false;
-    }
-
-    private function chainContainsMethodCall(Expr $expr, MethodCall $target): bool
-    {
-        if ($expr === $target) {
-            return true;
-        }
-
-        if ($expr instanceof MethodCall) {
-            return $this->chainContainsMethodCall($expr->var, $target);
-        }
-
-        return false;
-    }
-
-    private function normalizePath(string $path): string
-    {
-        $realPath = realpath($path);
-        if ($realPath !== false) {
-            return str_replace('\\', '/', $realPath);
-        }
-
-        return str_replace('\\', '/', $path);
     }
 }

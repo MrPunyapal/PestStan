@@ -15,10 +15,14 @@ parametersSchema:
 
 services:
     -
+        class: PestStan\Type\Pest\PestFileDiscoverer
+        arguments:
+            scanPaths: %paths%
+
+    -
         class: PestStan\Type\Pest\PestConfigReader
         arguments:
             pestConfigFiles: %peststan.pestConfigFiles%
-            scanPaths: %paths%
 
     -
         class: PestStan\Type\Pest\PestFunctionReturnTypeExtension
@@ -54,8 +58,6 @@ services:
 
     -
         class: PestStan\Type\Pest\PestHookPropertyReader
-        arguments:
-            scanPaths: %paths%
 
     -
         class: PestStan\Type\Pest\TestCaseDynamicPropertyTypeExtension

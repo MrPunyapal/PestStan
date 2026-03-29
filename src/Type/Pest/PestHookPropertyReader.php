@@ -18,12 +18,7 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Stmt\Expression;
-use PhpParser\Node\Stmt\Namespace_;
-use PhpParser\Node\Stmt\Use_;
 use PhpParser\NodeFinder;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\ParserFactory;
 
 /**
  * Parses test files and Pest.php config files to extract dynamic property expressions from beforeEach/beforeAll hooks.
@@ -40,11 +35,8 @@ final class PestHookPropertyReader
 
     private bool $pestFilesParsed = false;
 
-    /**
-     * @param  string[]  $scanPaths  PHPStan's configured analysis paths
-     */
     public function __construct(
-        private readonly array $scanPaths,
+        private readonly PestFileDiscoverer $fileDiscoverer,
     ) {}
 
     /**
@@ -56,7 +48,7 @@ final class PestHookPropertyReader
     {
         $this->ensurePestFilesParsed();
 
-        $normalizedFile = $this->normalizePath($filePath);
+        $normalizedFile = $this->fileDiscoverer->normalizePath($filePath);
 
         if (! isset($this->filePropertyCache[$normalizedFile])) {
             $this->filePropertyCache[$normalizedFile] = $this->parseTestFile($filePath);
@@ -65,9 +57,7 @@ final class PestHookPropertyReader
         $properties = $this->filePropertyCache[$normalizedFile];
 
         $directoryProperties = $this->resolveDirectoryProperties($filePath);
-        foreach ($directoryProperties as $name => $exprs) {
-            $properties[$name] = isset($properties[$name]) ? array_merge($properties[$name], $exprs) : $exprs;
-        }
+        $this->mergePropertyExprs($properties, $directoryProperties);
 
         return $properties;
     }
@@ -79,7 +69,7 @@ final class PestHookPropertyReader
      */
     private function resolveDirectoryProperties(string $filePath): array
     {
-        $normalizedFile = $this->normalizePath($filePath);
+        $normalizedFile = $this->fileDiscoverer->normalizePath($filePath);
 
         $bestMatch = null;
         $bestLength = 0;
@@ -107,68 +97,10 @@ final class PestHookPropertyReader
 
         $this->pestFilesParsed = true;
 
-        $pestFiles = $this->discoverPestFiles();
+        $pestFiles = $this->fileDiscoverer->discoverPestFiles();
 
         foreach ($pestFiles as $pestFile) {
             $this->parsePestConfigFile($pestFile);
-        }
-    }
-
-    /**
-     * Discovers Pest.php files from scan paths.
-     *
-     * @return string[]
-     */
-    private function discoverPestFiles(): array
-    {
-        $files = [];
-
-        foreach ($this->scanPaths as $scanPath) {
-            $realPath = realpath($scanPath);
-            if ($realPath === false) {
-                continue;
-            }
-
-            $dir = is_file($realPath) ? dirname($realPath) : $realPath;
-            $this->findPestFilesInDirectory($dir, $files);
-        }
-
-        return array_unique($files);
-    }
-
-    /**
-     * Recursively finds Pest.php files in a directory.
-     *
-     * @param  string[]  $results
-     */
-    private function findPestFilesInDirectory(string $directory, array &$results): void
-    {
-        $pestFile = $directory . DIRECTORY_SEPARATOR . 'Pest.php';
-        if (is_file($pestFile)) {
-            $realPath = realpath($pestFile);
-            if ($realPath !== false) {
-                $results[] = $realPath;
-            }
-        }
-
-        $entries = scandir($directory);
-        if ($entries === false) {
-            return;
-        }
-
-        foreach ($entries as $entry) {
-            if ($entry === '.') {
-                continue;
-            }
-
-            if ($entry === '..') {
-                continue;
-            }
-
-            $path = $directory . DIRECTORY_SEPARATOR . $entry;
-            if (is_dir($path)) {
-                $this->findPestFilesInDirectory($path, $results);
-            }
         }
     }
 
@@ -177,7 +109,7 @@ final class PestHookPropertyReader
      */
     private function parsePestConfigFile(string $filePath): void
     {
-        $parsed = $this->parseFile($filePath);
+        $parsed = $this->fileDiscoverer->parseFile($filePath);
         if ($parsed === null) {
             return;
         }
@@ -198,13 +130,13 @@ final class PestHookPropertyReader
      */
     private function extractUsesBeforeEachProperties(NodeFinder $nodeFinder, array $stmts, array $useMap, string $pestFilePath): void
     {
-        $directoryPath = $this->normalizePath(dirname($pestFilePath)) . '/';
+        $directoryPath = $this->fileDiscoverer->normalizePath(dirname($pestFilePath)) . '/';
 
         /** @var MethodCall[] $methodCalls */
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
         foreach ($methodCalls as $methodCall) {
-            if (! $this->isMethodNamed($methodCall, 'beforeEach')) {
+            if (! $this->fileDiscoverer->isMethodNamed($methodCall, 'beforeEach')) {
                 continue;
             }
 
@@ -218,18 +150,27 @@ final class PestHookPropertyReader
                 }
 
                 $assigned = $this->extractPropertyAssignments($arg->value, $useMap);
-                foreach ($assigned as $name => $exprs) {
-                    if (! isset($this->directoryPropertyMap[$directoryPath][$name])) {
-                        $this->directoryPropertyMap[$directoryPath][$name] = [];
-                    }
-
-                    foreach ($exprs as $expr) {
-                        $this->directoryPropertyMap[$directoryPath][$name][] = $expr;
-                    }
+                if (! isset($this->directoryPropertyMap[$directoryPath])) {
+                    $this->directoryPropertyMap[$directoryPath] = [];
                 }
+
+                $this->mergePropertyExprs($this->directoryPropertyMap[$directoryPath], $assigned);
 
                 break;
             }
+        }
+    }
+
+    /**
+     * Merges source property expressions into the target map.
+     *
+     * @param  array<string, list<Expr>>  $target
+     * @param  array<string, list<Expr>>  $source
+     */
+    private function mergePropertyExprs(array &$target, array $source): void
+    {
+        foreach ($source as $name => $exprs) {
+            $target[$name] = isset($target[$name]) ? array_merge($target[$name], $exprs) : $exprs;
         }
     }
 
@@ -256,7 +197,7 @@ final class PestHookPropertyReader
      */
     private function parseTestFile(string $filePath): array
     {
-        $parsed = $this->parseFile($filePath);
+        $parsed = $this->fileDiscoverer->parseFile($filePath);
         if ($parsed === null) {
             return [];
         }
@@ -285,15 +226,7 @@ final class PestHookPropertyReader
                 }
 
                 $assigned = $this->extractPropertyAssignments($arg->value, $useMap);
-                foreach ($assigned as $name => $exprs) {
-                    if (! isset($properties[$name])) {
-                        $properties[$name] = [];
-                    }
-
-                    foreach ($exprs as $expr) {
-                        $properties[$name][] = $expr;
-                    }
-                }
+                $this->mergePropertyExprs($properties, $assigned);
 
                 break;
             }
@@ -447,76 +380,5 @@ final class PestHookPropertyReader
         }
 
         return new New_(new FullyQualified($fqcn));
-    }
-
-    /**
-     * Parses a PHP file into AST with name resolution, returning statements and a use alias map.
-     *
-     * @return array{Node[], array<string, string>}|null
-     */
-    private function parseFile(string $filePath): ?array
-    {
-        $content = file_get_contents($filePath);
-        if ($content === false) {
-            return null;
-        }
-
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $stmts = $parser->parse($content);
-
-        if ($stmts === null) {
-            return null;
-        }
-
-        $traverser = new NodeTraverser;
-        $traverser->addVisitor(new NameResolver);
-
-        $stmts = $traverser->traverse($stmts);
-        $useMap = $this->extractUseMap($stmts);
-
-        return [$stmts, $useMap];
-    }
-
-    /**
-     * Builds an alias→FQCN map from use statements in the parsed AST.
-     *
-     * @param  Node[]  $stmts
-     * @return array<string, string>
-     */
-    private function extractUseMap(array $stmts): array
-    {
-        $useMap = [];
-
-        foreach ($stmts as $stmt) {
-            if ($stmt instanceof Use_) {
-                foreach ($stmt->uses as $use) {
-                    $alias = $use->alias !== null ? $use->alias->name : $use->name->getLast();
-                    $useMap[$alias] = $use->name->toString();
-                }
-            }
-
-            if ($stmt instanceof Namespace_) {
-                foreach ($stmt->stmts as $namespacedStmt) {
-                    if ($namespacedStmt instanceof Use_) {
-                        foreach ($namespacedStmt->uses as $use) {
-                            $alias = $use->alias !== null ? $use->alias->name : $use->name->getLast();
-                            $useMap[$alias] = $use->name->toString();
-                        }
-                    }
-                }
-            }
-        }
-
-        return $useMap;
-    }
-
-    private function isMethodNamed(MethodCall $methodCall, string $name): bool
-    {
-        return $methodCall->name instanceof Identifier && $methodCall->name->toString() === $name;
-    }
-
-    private function normalizePath(string $path): string
-    {
-        return str_replace('\\', '/', $path);
     }
 }

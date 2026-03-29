@@ -209,3 +209,24 @@ function testBeforeEachMethodCallChain(): void
         assertType(Post::class, $this->post);
     });
 }
+
+function testEmptyBeforeEachHook(): void
+{
+    beforeEach(function (): void {});
+
+    it('returns mixed for properties when hook is empty', function (): void {
+        assertType('mixed', $this->anything);
+    });
+}
+
+function testBeforeEachWithOnlyLocalStatements(): void
+{
+    beforeEach(function (): void {
+        $local = new Post;
+        $x = 42;
+    });
+
+    it('returns mixed when hook only has local variable assignments', function (): void {
+        assertType('mixed', $this->local);
+    });
+}

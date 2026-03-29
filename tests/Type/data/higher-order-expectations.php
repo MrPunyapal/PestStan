@@ -91,3 +91,19 @@ function testNotToBeNullThenHigherOrder(): void
         ->title;
     assertType('Pest\Expectations\HigherOrderExpectation<Pest\Expectation<Tests\Type\Fixtures\Post|null>, string>', $result);
 }
+
+function testDeepPropertyChainThreeLevels(): void
+{
+    $post = new Post;
+    $result = expect($post)->author->name;
+    assertType('Pest\Expectations\HigherOrderExpectation<Pest\Expectation<Tests\Type\Fixtures\Post>, string>', $result);
+}
+
+function testPropertyChainAfterAssertionReset(): void
+{
+    $post = new Post;
+    $result = expect($post)
+        ->title->toBe('Hello')
+        ->author;
+    assertType('Pest\Expectations\HigherOrderExpectation<Pest\Expectation<Tests\Type\Fixtures\Post>, Tests\Type\Fixtures\Author>', $result);
+}
