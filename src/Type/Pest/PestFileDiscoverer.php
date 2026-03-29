@@ -16,6 +16,7 @@ use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use SplFileInfo;
 use UnexpectedValueException;
 
 /**
@@ -120,9 +121,13 @@ final class PestFileDiscoverer
             return;
         }
 
-        /** @var \SplFileInfo $file */
+        /** @var SplFileInfo $file */
         foreach ($iterator as $file) {
-            if ($file->getFilename() !== 'Pest.php' || ! $file->isFile()) {
+            if ($file->getFilename() !== 'Pest.php') {
+                continue;
+            }
+
+            if (! $file->isFile()) {
                 continue;
             }
 
