@@ -28,7 +28,7 @@ it('float literal is always toBeFloat', function (): void {
 });
 
 it('null is always toBeNull', function (): void {
-    expect(null)->toBeNull(); // line 31
+    expect()->toBeNull(); // line 31
 });
 
 it('array is always toBeArray', function (): void {
@@ -44,7 +44,7 @@ it('int is always toBeNumeric', function (): void {
 });
 
 it('stdClass instance is always toBeInstanceOf stdClass', function (): void {
-    expect(new stdClass())->toBeInstanceOf(stdClass::class); // line 47
+    expect(new stdClass)->toBeInstanceOf(stdClass::class); // line 47
 });
 
 // Valid: non-trivial assertions

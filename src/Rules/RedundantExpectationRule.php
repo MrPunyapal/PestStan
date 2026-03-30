@@ -113,11 +113,23 @@ final class RedundantExpectationRule implements Rule
 
     private function isAlwaysScalar(Type $type): bool
     {
-        return $type->isString()->yes()
-            || $type->isInteger()->yes()
-            || $type->isFloat()->yes()
-            || $type->isTrue()->yes()
-            || $type->isFalse()->yes();
+        if ($type->isString()->yes()) {
+            return true;
+        }
+
+        if ($type->isInteger()->yes()) {
+            return true;
+        }
+
+        if ($type->isFloat()->yes()) {
+            return true;
+        }
+
+        if ($type->isTrue()->yes()) {
+            return true;
+        }
+
+        return $type->isFalse()->yes();
     }
 
     private function isInstanceOfTrivial(Type $valueType, MethodCall $node, Scope $scope): bool
