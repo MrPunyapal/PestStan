@@ -287,6 +287,23 @@ expect('hello')->toBeNull();
 
 Covered assertions: `toBeString`, `toBeInt`, `toBeFloat`, `toBeBool`, `toBeTrue`, `toBeFalse`, `toBeNull`, `toBeArray`, `toBeList`, `toBeObject`, `toBeCallable`, `toBeIterable`, `toBeNumeric`, `toBeScalar`, `toBeInstanceOf`.
 
+### `pest.redundantExpectation` — Assertion that always passes
+
+When the static type already guarantees an assertion will always succeed, the assertion is redundant and adds no value.
+
+```php
+expect(true)->toBeTrue();
+// ✘ Calling toBeTrue() on Expectation<true> will always pass — the assertion is redundant.
+
+expect('hello')->toBeString();
+// ✘ Calling toBeString() on Expectation<string> will always pass — the assertion is redundant.
+
+expect(42)->toBeNumeric();
+// ✘ Calling toBeNumeric() on Expectation<int> will always pass — the assertion is redundant.
+```
+
+Covered assertions: `toBeString`, `toBeInt`, `toBeFloat`, `toBeBool`, `toBeTrue`, `toBeFalse`, `toBeNull`, `toBeArray`, `toBeList`, `toBeObject`, `toBeCallable`, `toBeIterable`, `toBeNumeric`, `toBeScalar`, `toBeInstanceOf`.
+
 ### `pest.expectationRequiresIterable` / `pest.expectationRequiresString` — Incompatible value type
 
 Some expectation methods require the value to satisfy a pre-condition.
