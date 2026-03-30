@@ -22,14 +22,14 @@ class DisallowedCallInDescribeRuleTest extends RuleTestCase
     public static function getAdditionalConfigFiles(): array
     {
         return [
-            __DIR__.'/../extension.neon',
+            __DIR__ . '/../extension.neon',
         ];
     }
 
     public function test_before_all_in_describe_is_reported(): void
     {
         $this->analyse([
-            __DIR__.'/data/disallowed-call-in-describe.php',
+            __DIR__ . '/data/disallowed-call-in-describe.php',
         ], [
             [
                 'beforeAll() cannot be used inside describe() blocks.',

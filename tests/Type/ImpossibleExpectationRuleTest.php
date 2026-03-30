@@ -22,14 +22,14 @@ class ImpossibleExpectationRuleTest extends RuleTestCase
     public static function getAdditionalConfigFiles(): array
     {
         return [
-            __DIR__.'/../extension.neon',
+            __DIR__ . '/../extension.neon',
         ];
     }
 
     public function test_impossible_expectations_are_reported(): void
     {
         $this->analyse([
-            __DIR__.'/data/impossible-expectation.php',
+            __DIR__ . '/data/impossible-expectation.php',
         ], [
             [
                 'Calling toBeString() on Expectation<int> will always fail.',

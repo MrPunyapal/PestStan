@@ -8,7 +8,10 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt\Nop;
 use PHPStan\Analyser\Scope;
+use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
@@ -25,7 +28,7 @@ final class EmptyTestClosureRule implements Rule
     }
 
     /**
-     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     * @return list<IdentifierRuleError>
      */
     public function processNode(Node $node, Scope $scope): array
     {
@@ -51,7 +54,7 @@ final class EmptyTestClosureRule implements Rule
 
         $realStmts = array_filter(
             $closure->stmts,
-            static fn (Node $stmt): bool => ! $stmt instanceof \PhpParser\Node\Stmt\Nop
+            static fn (Node $stmt): bool => ! $stmt instanceof Nop
         );
 
         if ($realStmts !== []) {
@@ -59,7 +62,7 @@ final class EmptyTestClosureRule implements Rule
         }
 
         $description = '';
-        if (isset($args[0]) && $args[0]->value instanceof \PhpParser\Node\Scalar\String_) {
+        if (isset($args[0]) && $args[0]->value instanceof String_) {
             $description = $args[0]->value->value;
         }
 

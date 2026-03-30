@@ -9,6 +9,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
 use PHPStan\Analyser\Scope;
+use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\MixedType;
@@ -45,7 +46,7 @@ final class ExpectationValueTypeRule implements Rule
     }
 
     /**
-     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     * @return list<IdentifierRuleError>
      */
     public function processNode(Node $node, Scope $scope): array
     {

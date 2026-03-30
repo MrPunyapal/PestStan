@@ -2,59 +2,59 @@
 
 declare(strict_types=1);
 
-describe('group with beforeAll', function () {
-    beforeAll(function () { // line 6
+describe('group with beforeAll', function (): void {
+    beforeAll(function (): void { // line 6
         // setup
     });
 
-    it('test inside describe', function () {
+    it('test inside describe', function (): void {
         expect(true)->toBeTrue();
     });
 });
 
-describe('group with afterAll', function () {
-    afterAll(function () { // line 16
+describe('group with afterAll', function (): void {
+    afterAll(function (): void { // line 16
         // cleanup
     });
 
-    it('test inside describe', function () {
+    it('test inside describe', function (): void {
         expect(true)->toBeTrue();
     });
 });
 
-describe('group with both', function () {
-    beforeAll(function () { // line 26
+describe('group with both', function (): void {
+    beforeAll(function (): void { // line 26
         // setup
     });
-    afterAll(function () { // line 29
+    afterAll(function (): void { // line 29
         // cleanup
     });
 
-    it('test inside describe', function () {
+    it('test inside describe', function (): void {
         expect(true)->toBeTrue();
     });
 });
 
 // Valid: beforeAll/afterAll at top level
-beforeAll(function () {
+beforeAll(function (): void {
     // setup
 });
 
-afterAll(function () {
+afterAll(function (): void {
     // cleanup
 });
 
 // Valid: beforeEach/afterEach inside describe
-describe('group with hooks', function () {
-    beforeEach(function () {
+describe('group with hooks', function (): void {
+    beforeEach(function (): void {
         // setup
     });
 
-    afterEach(function () {
+    afterEach(function (): void {
         // cleanup
     });
 
-    it('test', function () {
+    it('test', function (): void {
         expect(true)->toBeTrue();
     });
 });

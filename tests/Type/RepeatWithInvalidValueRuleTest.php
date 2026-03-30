@@ -22,14 +22,14 @@ class RepeatWithInvalidValueRuleTest extends RuleTestCase
     public static function getAdditionalConfigFiles(): array
     {
         return [
-            __DIR__.'/../extension.neon',
+            __DIR__ . '/../extension.neon',
         ];
     }
 
     public function test_repeat_with_invalid_values_is_reported(): void
     {
         $this->analyse([
-            __DIR__.'/data/repeat-invalid-value.php',
+            __DIR__ . '/data/repeat-invalid-value.php',
         ], [
             [
                 'repeat() requires a value greater than 0, got 0.',

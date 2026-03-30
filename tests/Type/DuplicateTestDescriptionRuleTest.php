@@ -22,14 +22,14 @@ class DuplicateTestDescriptionRuleTest extends RuleTestCase
     public static function getAdditionalConfigFiles(): array
     {
         return [
-            __DIR__.'/../extension.neon',
+            __DIR__ . '/../extension.neon',
         ];
     }
 
     public function test_duplicate_descriptions_are_reported(): void
     {
         $this->analyse([
-            __DIR__.'/data/duplicate-test-description.php',
+            __DIR__ . '/data/duplicate-test-description.php',
         ], [
             [
                 "A test with the description 'it does something' already exists in this file.",

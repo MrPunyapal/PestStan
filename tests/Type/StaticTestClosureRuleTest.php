@@ -22,14 +22,14 @@ class StaticTestClosureRuleTest extends RuleTestCase
     public static function getAdditionalConfigFiles(): array
     {
         return [
-            __DIR__.'/../extension.neon',
+            __DIR__ . '/../extension.neon',
         ];
     }
 
     public function test_static_closures_are_reported(): void
     {
         $this->analyse([
-            __DIR__.'/data/static-test-closure.php',
+            __DIR__ . '/data/static-test-closure.php',
         ], [
             [
                 'Test closure passed to it() must not be static.',

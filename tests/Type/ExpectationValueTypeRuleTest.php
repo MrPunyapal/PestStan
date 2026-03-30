@@ -22,14 +22,14 @@ class ExpectationValueTypeRuleTest extends RuleTestCase
     public static function getAdditionalConfigFiles(): array
     {
         return [
-            __DIR__.'/../extension.neon',
+            __DIR__ . '/../extension.neon',
         ];
     }
 
     public function test_expectation_value_type_mismatches_are_reported(): void
     {
         $this->analyse([
-            __DIR__.'/data/expectation-value-type.php',
+            __DIR__ . '/data/expectation-value-type.php',
         ], [
             [
                 'Calling each() on Expectation<int> — value is not iterable.',

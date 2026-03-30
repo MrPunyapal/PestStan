@@ -10,6 +10,7 @@ use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\Expression;
 use PHPStan\Analyser\Scope;
+use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
@@ -32,7 +33,7 @@ final class DisallowedCallInDescribeRule implements Rule
     }
 
     /**
-     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     * @return list<IdentifierRuleError>
      */
     public function processNode(Node $node, Scope $scope): array
     {
@@ -53,7 +54,11 @@ final class DisallowedCallInDescribeRule implements Rule
         $errors = [];
 
         foreach ($closure->stmts as $stmt) {
-            if (! $stmt instanceof Expression || ! $stmt->expr instanceof FuncCall) {
+            if (! $stmt instanceof Expression) {
+                continue;
+            }
+
+            if (! $stmt->expr instanceof FuncCall) {
                 continue;
             }
 

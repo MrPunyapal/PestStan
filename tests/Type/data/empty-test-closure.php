@@ -2,18 +2,16 @@
 
 declare(strict_types=1);
 
-it('empty it closure', function () {
-});
+it('empty it closure', function (): void {});
 
-test('empty test closure', function () {
-});
+test('empty test closure', function (): void {});
 
 // Valid: non-empty closures
-it('has assertions', function () {
+it('has assertions', function (): void {
     expect(true)->toBeTrue();
 });
 
-test('has assertions', function () {
+test('has assertions', function (): void {
     expect(42)->toBeInt();
 });
 

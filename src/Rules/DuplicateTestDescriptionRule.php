@@ -9,6 +9,7 @@ use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
+use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
@@ -28,7 +29,7 @@ final class DuplicateTestDescriptionRule implements Rule
     }
 
     /**
-     * @return list<\PHPStan\Rules\IdentifierRuleError>
+     * @return list<IdentifierRuleError>
      */
     public function processNode(Node $node, Scope $scope): array
     {
@@ -53,7 +54,7 @@ final class DuplicateTestDescriptionRule implements Rule
         $description = $args[0]->value->value;
 
         if ($funcName === 'it') {
-            $description = 'it '.$description;
+            $description = 'it ' . $description;
         }
 
         $file = $scope->getFile();
