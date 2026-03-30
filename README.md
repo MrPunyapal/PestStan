@@ -215,6 +215,109 @@ expect('App\DTOs')->toBeReadonly();
 expect('App')->toUseStrictTypes();
 ```
 
+## Static Analysis Rules
+
+PestStan ships with rules that catch common Pest mistakes at static analysis time, before your tests run.
+
+### `pest.emptyTestClosure` — Empty test body
+
+Detects tests whose closure contains no statements.
+
+```php
+it('does something'); // fine — todo test
+it('does something', function () {});
+// ✘ Test 'does something' has an empty closure body. Did you forget to add assertions?
+```
+
+### `pest.staticTestClosure` — Static test closure
+
+Pest binds `$this` inside every test closure to the `TestCase` instance. Marking the closure `static` prevents that binding.
+
+```php
+it('example', static function () {
+// ✘ Test closure passed to it() must not be static.
+    expect(true)->toBeTrue();
+});
+```
+
+### `pest.beforeAllInDescribe` / `pest.afterAllInDescribe` — Lifecycle hooks inside `describe()`
+
+Pest does not support `beforeAll()` or `afterAll()` inside `describe()` blocks — calling them throws at runtime.
+
+```php
+describe('suite', function () {
+    beforeAll(function () { /* ... */ });
+    // ✘ beforeAll() cannot be used inside describe() blocks.
+
+    afterAll(function () { /* ... */ });
+    // ✘ afterAll() cannot be used inside describe() blocks.
+});
+```
+
+### `pest.repeatInvalidValue` — Invalid `repeat()` count
+
+`repeat()` requires a positive integer greater than zero.
+
+```php
+it('runs multiple times', function () { /* ... */ })->repeat(0);
+// ✘ repeat() requires a value greater than 0, got 0.
+```
+
+### `pest.duplicateTestDescription` — Duplicate test description
+
+Two tests in the same file with the same description will collide at runtime.
+
+```php
+it('does something', fn () => expect(1)->toBe(1));
+it('does something', fn () => expect(2)->toBe(2));
+// ✘ A test with the description 'it does something' already exists in this file.
+```
+
+### `pest.impossibleExpectation` — Assertion that always fails
+
+When the static type already makes an assertion impossible, PestStan reports it.
+
+```php
+expect(42)->toBeString();
+// ✘ Calling toBeString() on Expectation<int> will always fail.
+
+expect('hello')->toBeNull();
+// ✘ Calling toBeNull() on Expectation<string> will always fail.
+```
+
+Covered assertions: `toBeString`, `toBeInt`, `toBeFloat`, `toBeBool`, `toBeTrue`, `toBeFalse`, `toBeNull`, `toBeArray`, `toBeList`, `toBeObject`, `toBeCallable`, `toBeIterable`, `toBeNumeric`, `toBeScalar`, `toBeInstanceOf`.
+
+### `pest.expectationRequiresIterable` / `pest.expectationRequiresString` — Incompatible value type
+
+Some expectation methods require the value to satisfy a pre-condition.
+
+```php
+expect(42)->each(fn ($e) => $e->toBeInt());
+// ✘ Calling each() on Expectation<int> — value is not iterable.
+
+expect(42)->toBeJson();
+// ✘ Calling toBeJson() on Expectation<int> — value must be a string.
+```
+
+Methods requiring an iterable: `each`, `sequence`.  
+Methods requiring a string: `json`, `toStartWith`, `toEndWith`, `toBeJson`, `toBeDirectory`, `toBeFile`, `toBeReadableFile`, `toBeWritableFile`, `toBeReadableDirectory`, `toBeWritableDirectory`.
+
+### Ignoring rules
+
+All rules use PHPStan [identifiers](https://phpstan.org/user-guide/ignoring-errors), so you can suppress them selectively in your baseline or inline:
+
+```neon
+# phpstan.neon
+parameters:
+    ignoreErrors:
+        - identifier: pest.emptyTestClosure
+```
+
+```php
+/** @phpstan-ignore pest.staticTestClosure */
+it('example', static fn () => expect(true)->toBeTrue());
+```
+
 ## Testing
 
 ```bash
