@@ -37,7 +37,7 @@ class EmptyTestClosureRuleTest extends RuleTestCase
             ],
             [
                 "Test 'empty test closure' has an empty closure body. Did you forget to add assertions?",
-                8,
+                7,
             ],
         ]);
     }

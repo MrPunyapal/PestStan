@@ -87,6 +87,14 @@ class ImpossibleExpectationRuleTest extends RuleTestCase
                 'Calling toBeNumeric() on Expectation<null> will always fail.',
                 59,
             ],
+            [
+                'Calling toBeInt() on Expectation<string> will always fail.',
+                74,
+            ],
+            [
+                'Calling toBeInt() on Expectation<string> will always fail.',
+                80,
+            ],
         ]);
     }
 }

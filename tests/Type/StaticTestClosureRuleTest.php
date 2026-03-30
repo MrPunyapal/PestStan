@@ -33,35 +33,35 @@ class StaticTestClosureRuleTest extends RuleTestCase
         ], [
             [
                 'Test closure passed to it() must not be static.',
-                6,
+                8,
             ],
             [
                 'Test closure passed to test() must not be static.',
-                10,
+                12,
             ],
             [
                 'Test closure passed to describe() must not be static.',
-                14,
+                16,
             ],
             [
                 'Test closure passed to beforeEach() must not be static.',
-                20,
+                22,
             ],
             [
                 'Test closure passed to afterEach() must not be static.',
-                24,
+                26,
             ],
             [
                 'Test closure passed to beforeAll() must not be static.',
-                28,
+                30,
             ],
             [
                 'Test closure passed to afterAll() must not be static.',
-                32,
+                34,
             ],
             [
                 'Test closure passed to it() must not be static.',
-                37,
+                39,
             ],
         ]);
     }
