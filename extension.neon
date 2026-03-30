@@ -92,5 +92,6 @@ rules:
     - PestStan\Rules\RepeatWithInvalidValueRule
     - PestStan\Rules\DuplicateTestDescriptionRule
     - PestStan\Rules\ImpossibleExpectationRule
+    - PestStan\Rules\RedundantExpectationRule
     - PestStan\Rules\ExpectationValueTypeRule
     - PestStan\Rules\EmptyTestClosureRule
