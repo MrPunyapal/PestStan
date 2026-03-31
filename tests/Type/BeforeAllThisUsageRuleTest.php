@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Type;
 
-use PestStan\Rules\RepeatWithInvalidValueRule;
+use PestStan\Rules\BeforeAllThisUsageRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 
 /**
- * @extends RuleTestCase<RepeatWithInvalidValueRule>
+ * @extends RuleTestCase<BeforeAllThisUsageRule>
  */
-class RepeatWithInvalidValueRuleTest extends RuleTestCase
+class BeforeAllThisUsageRuleTest extends RuleTestCase
 {
     protected function getRule(): Rule
     {
-        return new RepeatWithInvalidValueRule;
+        return new BeforeAllThisUsageRule;
     }
 
     /** @return string[] */
@@ -26,18 +26,18 @@ class RepeatWithInvalidValueRuleTest extends RuleTestCase
         ];
     }
 
-    public function test_repeat_with_invalid_values_is_reported(): void
+    public function test_this_usage_in_before_all_is_reported(): void
     {
         $this->analyse([
-            __DIR__ . '/data/repeat-invalid-value.php',
+            __DIR__ . '/data/before-all-this-usage.php',
         ], [
             [
-                'repeat() requires a value greater than 0, got 0.',
-                6,
+                'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.',
+                7,
                 'This can be auto-fixed with rector-pest.',
             ],
             [
-                'repeat() requires a value greater than 0, got -1.',
+                'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.',
                 11,
                 'This can be auto-fixed with rector-pest.',
             ],

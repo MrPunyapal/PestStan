@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
-use PhpParser\Node\Name;
-use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Nop;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
@@ -32,22 +31,11 @@ final class EmptyTestClosureRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (! $node->name instanceof Name) {
+        if (! PestFunctionDetector::isTestFunction($node)) {
             return [];
         }
 
-        $funcName = $node->name->toString();
-        if ($funcName !== 'it' && $funcName !== 'test') {
-            return [];
-        }
-
-        $args = $node->getArgs();
-        $closureArgIndex = 1;
-        if (! isset($args[$closureArgIndex])) {
-            return [];
-        }
-
-        $closure = $args[$closureArgIndex]->value;
+        $closure = PestFunctionDetector::extractClosure($node);
         if (! $closure instanceof Closure) {
             return [];
         }
@@ -61,14 +49,11 @@ final class EmptyTestClosureRule implements Rule
             return [];
         }
 
-        $description = '';
-        if (isset($args[0]) && $args[0]->value instanceof String_) {
-            $description = $args[0]->value->value;
-        }
+        $description = PestFunctionDetector::extractDescription($node) ?? '';
 
         return [
             RuleErrorBuilder::message(
-                sprintf("Test '%s' has an empty closure body. Did you forget to add assertions?", $description)
+                sprintf("Test '%s' has an empty closure body. Add assertions or chain ->todo() to mark as pending.", $description)
             )
                 ->identifier('pest.emptyTestClosure')
                 ->build(),

@@ -85,6 +85,7 @@ final class RedundantExpectationRule implements Rule
                 )
             )
                 ->identifier('pest.redundantExpectation')
+                ->tip('Consider removing this assertion — the value is already guaranteed to be this type.')
                 ->build(),
         ];
     }

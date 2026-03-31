@@ -8,6 +8,7 @@ use Pest\PendingCalls\TestCall;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
@@ -15,11 +16,11 @@ use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\ObjectType;
 
 /**
- * Detects repeat() calls with a value less than 1.
+ * Detects empty string arguments passed to group().
  *
  * @implements Rule<MethodCall>
  */
-final class RepeatWithInvalidValueRule implements Rule
+final class InvalidGroupNameRule implements Rule
 {
     public function getNodeType(): string
     {
@@ -31,7 +32,7 @@ final class RepeatWithInvalidValueRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (! $node->name instanceof Identifier || $node->name->name !== 'repeat') {
+        if (! $node->name instanceof Identifier || $node->name->name !== 'group') {
             return [];
         }
 
@@ -42,19 +43,18 @@ final class RepeatWithInvalidValueRule implements Rule
 
         $args = $node->getArgs();
         if ($args === []) {
-            return [];
+            return [
+                RuleErrorBuilder::message('group() requires at least one non-empty string argument.')
+                    ->identifier('pest.invalidGroupName')
+                    ->build(),
+            ];
         }
 
-        $argType = $scope->getType($args[0]->value);
-
-        foreach ($argType->getConstantScalarValues() as $value) {
-            if (is_int($value) && $value < 1) {
+        foreach ($args as $arg) {
+            if ($arg->value instanceof String_ && trim($arg->value->value) === '') {
                 return [
-                    RuleErrorBuilder::message(
-                        sprintf('repeat() requires a value greater than 0, got %d.', $value)
-                    )
-                        ->identifier('pest.repeatInvalidValue')
-                        ->tip('This can be auto-fixed with rector-pest.')
+                    RuleErrorBuilder::message('group() requires a non-empty string argument.')
+                        ->identifier('pest.invalidGroupName')
                         ->build(),
                 ];
             }

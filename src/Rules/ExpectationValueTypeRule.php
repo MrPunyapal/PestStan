@@ -80,6 +80,7 @@ final class ExpectationValueTypeRule implements Rule
                     sprintf('Calling %s() on Expectation<%s> — value is not iterable.', $methodName, $typeDesc)
                 )
                     ->identifier('pest.expectationRequiresIterable')
+                    ->tip('Pass an iterable value to expect() before calling ' . $methodName . '().')
                     ->build(),
             ];
         }
@@ -90,6 +91,7 @@ final class ExpectationValueTypeRule implements Rule
                     sprintf('Calling %s() on Expectation<%s> — value must be a string.', $methodName, $typeDesc)
                 )
                     ->identifier('pest.expectationRequiresString')
+                    ->tip('Pass a string value to expect() before calling ' . $methodName . '().')
                     ->build(),
             ];
         }

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Type;
 
-use PestStan\Rules\RepeatWithInvalidValueRule;
+use PestStan\Rules\DescribeWithoutTestsRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 
 /**
- * @extends RuleTestCase<RepeatWithInvalidValueRule>
+ * @extends RuleTestCase<DescribeWithoutTestsRule>
  */
-class RepeatWithInvalidValueRuleTest extends RuleTestCase
+class DescribeWithoutTestsRuleTest extends RuleTestCase
 {
     protected function getRule(): Rule
     {
-        return new RepeatWithInvalidValueRule;
+        return new DescribeWithoutTestsRule;
     }
 
     /** @return string[] */
@@ -26,19 +26,19 @@ class RepeatWithInvalidValueRuleTest extends RuleTestCase
         ];
     }
 
-    public function test_repeat_with_invalid_values_is_reported(): void
+    public function test_describe_without_tests_is_reported(): void
     {
         $this->analyse([
-            __DIR__ . '/data/repeat-invalid-value.php',
+            __DIR__ . '/data/describe-without-tests.php',
         ], [
             [
-                'repeat() requires a value greater than 0, got 0.',
+                "describe() block 'empty group' contains no tests.",
                 6,
                 'This can be auto-fixed with rector-pest.',
             ],
             [
-                'repeat() requires a value greater than 0, got -1.',
-                11,
+                "describe() block 'hooks only' contains no tests.",
+                10,
                 'This can be auto-fixed with rector-pest.',
             ],
         ]);

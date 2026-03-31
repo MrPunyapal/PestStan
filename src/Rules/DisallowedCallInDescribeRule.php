@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
@@ -15,7 +16,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
- * Detects beforeAll() and afterAll() calls inside describe() blocks.
+ * Detects beforeAll() and afterAll() calls inside describe() blocks, including nested describes.
  *
  * @implements Rule<FuncCall>
  */
@@ -37,20 +38,25 @@ final class DisallowedCallInDescribeRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (! $node->name instanceof Name || $node->name->toString() !== 'describe') {
+        if (! PestFunctionDetector::isDescribeFunction($node)) {
             return [];
         }
 
-        $args = $node->getArgs();
-        if (count($args) < 2) {
-            return [];
-        }
-
-        $closure = $args[1]->value;
+        $closure = PestFunctionDetector::extractClosure($node);
         if (! $closure instanceof Closure) {
             return [];
         }
 
+        return $this->collectForbiddenCalls($closure);
+    }
+
+    /**
+     * Recursively collects forbidden calls in a describe closure and nested describe closures.
+     *
+     * @return list<IdentifierRuleError>
+     */
+    private function collectForbiddenCalls(Closure $closure): array
+    {
         $errors = [];
 
         foreach ($closure->stmts as $stmt) {
@@ -68,16 +74,23 @@ final class DisallowedCallInDescribeRule implements Rule
             }
 
             $name = $call->name->toString();
-            if (! isset(self::FORBIDDEN_FUNCTIONS[$name])) {
-                continue;
+
+            if (isset(self::FORBIDDEN_FUNCTIONS[$name])) {
+                $errors[] = RuleErrorBuilder::message(
+                    sprintf('%s() cannot be used inside describe() blocks. Use %s instead.', $name, $name === 'beforeAll' ? 'beforeEach()' : 'afterEach()')
+                )
+                    ->identifier(self::FORBIDDEN_FUNCTIONS[$name])
+                    ->line($call->getStartLine())
+                    ->tip('This can be auto-fixed with rector-pest.')
+                    ->build();
             }
 
-            $errors[] = RuleErrorBuilder::message(
-                sprintf('%s() cannot be used inside describe() blocks.', $name)
-            )
-                ->identifier(self::FORBIDDEN_FUNCTIONS[$name])
-                ->line($call->getStartLine())
-                ->build();
+            if ($name === 'describe') {
+                $nestedClosure = PestFunctionDetector::extractClosure($call);
+                if ($nestedClosure instanceof Closure) {
+                    $errors = array_merge($errors, $this->collectForbiddenCalls($nestedClosure));
+                }
+            }
         }
 
         return $errors;

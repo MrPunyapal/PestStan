@@ -85,6 +85,7 @@ final class ImpossibleExpectationRule implements Rule
                 )
             )
                 ->identifier('pest.impossibleExpectation')
+                ->tip('The value is of type ' . $valueType->describe(VerbosityLevel::typeOnly()) . ', which can never satisfy ' . $methodName . '().')
                 ->build(),
         ];
     }

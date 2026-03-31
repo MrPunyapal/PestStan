@@ -32,11 +32,11 @@ class EmptyTestClosureRuleTest extends RuleTestCase
             __DIR__ . '/data/empty-test-closure.php',
         ], [
             [
-                "Test 'empty it closure' has an empty closure body. Did you forget to add assertions?",
+                "Test 'empty it closure' has an empty closure body. Add assertions or chain ->todo() to mark as pending.",
                 5,
             ],
             [
-                "Test 'empty test closure' has an empty closure body. Did you forget to add assertions?",
+                "Test 'empty test closure' has an empty closure body. Add assertions or chain ->todo() to mark as pending.",
                 7,
             ],
         ]);

@@ -86,6 +86,20 @@ services:
         tags:
             - phpstan.ignoreErrorExtension
 
+    -
+        class: PestStan\Rules\InvalidThrowsExceptionRule
+        arguments:
+            reflectionProvider: @reflectionProvider
+        tags:
+            - phpstan.rules.rule
+
+    -
+        class: PestStan\Rules\CoversClassExistsRule
+        arguments:
+            reflectionProvider: @reflectionProvider
+        tags:
+            - phpstan.rules.rule
+
 rules:
     - PestStan\Rules\DisallowedCallInDescribeRule
     - PestStan\Rules\StaticTestClosureRule
@@ -95,3 +109,7 @@ rules:
     - PestStan\Rules\RedundantExpectationRule
     - PestStan\Rules\ExpectationValueTypeRule
     - PestStan\Rules\EmptyTestClosureRule
+    - PestStan\Rules\BeforeAllThisUsageRule
+    - PestStan\Rules\MissingAssertionRule
+    - PestStan\Rules\DescribeWithoutTestsRule
+    - PestStan\Rules\InvalidGroupNameRule
