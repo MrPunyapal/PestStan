@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\PestFunctionDetector;
 use PhpParser\Node;
-use PhpParser\Node\Expr\ArrowFunction;
-use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
-use PhpParser\Node\Name;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
@@ -21,17 +19,6 @@ use PHPStan\Rules\RuleErrorBuilder;
  */
 final class StaticTestClosureRule implements Rule
 {
-    /** @var array<string, int> Maps function names to the closure argument index */
-    private const PEST_FUNCTIONS = [
-        'it' => 1,
-        'test' => 1,
-        'describe' => 1,
-        'beforeEach' => 0,
-        'afterEach' => 0,
-        'beforeAll' => 0,
-        'afterAll' => 0,
-    ];
-
     public function getNodeType(): string
     {
         return FuncCall::class;
@@ -42,23 +29,13 @@ final class StaticTestClosureRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (! $node->name instanceof Name) {
+        $name = PestFunctionDetector::getFunctionName($node);
+        if ($name === null) {
             return [];
         }
 
-        $name = $node->name->toString();
-        if (! isset(self::PEST_FUNCTIONS[$name])) {
-            return [];
-        }
-
-        $closureArgIndex = self::PEST_FUNCTIONS[$name];
-        $args = $node->getArgs();
-        if (! isset($args[$closureArgIndex])) {
-            return [];
-        }
-
-        $closure = $args[$closureArgIndex]->value;
-        if (! $closure instanceof Closure && ! $closure instanceof ArrowFunction) {
+        $closure = PestFunctionDetector::extractClosure($node);
+        if ($closure === null) {
             return [];
         }
 
@@ -68,9 +45,10 @@ final class StaticTestClosureRule implements Rule
 
         return [
             RuleErrorBuilder::message(
-                sprintf('Test closure passed to %s() must not be static.', $name)
+                sprintf('Test closure passed to %s() must not be static. Remove the `static` keyword.', $name)
             )
                 ->identifier('pest.staticTestClosure')
+                ->tip('This can be auto-fixed with rector-pest.')
                 ->build(),
         ];
     }

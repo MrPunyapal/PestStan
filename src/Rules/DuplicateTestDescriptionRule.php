@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
-use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
@@ -37,22 +37,20 @@ final class DuplicateTestDescriptionRule implements Rule
             return [];
         }
 
+        if (! PestFunctionDetector::isTestFunction($node)) {
+            return [];
+        }
+
+        $description = PestFunctionDetector::extractDescription($node);
+        if ($description === null) {
+            return [];
+        }
+
         if (! $node->name instanceof Name) {
             return [];
         }
 
         $funcName = $node->name->toString();
-        if ($funcName !== 'it' && $funcName !== 'test') {
-            return [];
-        }
-
-        $args = $node->getArgs();
-        if ($args === [] || ! $args[0]->value instanceof String_) {
-            return [];
-        }
-
-        $description = $args[0]->value->value;
-
         if ($funcName === 'it') {
             $description = 'it ' . $description;
         }
