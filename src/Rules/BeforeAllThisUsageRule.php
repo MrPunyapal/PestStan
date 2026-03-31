@@ -6,8 +6,11 @@ namespace PestStan\Rules;
 
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
@@ -67,7 +70,7 @@ final class BeforeAllThisUsageRule implements Rule
     /**
      * @param  list<IdentifierRuleError>  $errors
      */
-    private function walkExprForThis(Node\Expr $expr, array &$errors): void
+    private function walkExprForThis(Expr $expr, array &$errors): void
     {
         if ($expr instanceof PropertyFetch && $expr->var instanceof Variable && $expr->var->name === 'this') {
             $errors[] = RuleErrorBuilder::message(
@@ -81,7 +84,7 @@ final class BeforeAllThisUsageRule implements Rule
             return;
         }
 
-        if ($expr instanceof Node\Expr\MethodCall && $expr->var instanceof Variable && $expr->var->name === 'this') {
+        if ($expr instanceof MethodCall && $expr->var instanceof Variable && $expr->var->name === 'this') {
             $errors[] = RuleErrorBuilder::message(
                 'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.'
             )
@@ -93,7 +96,7 @@ final class BeforeAllThisUsageRule implements Rule
             return;
         }
 
-        if ($expr instanceof Node\Expr\Assign) {
+        if ($expr instanceof Assign) {
             $this->walkExprForThis($expr->var, $errors);
             $this->walkExprForThis($expr->expr, $errors);
         }

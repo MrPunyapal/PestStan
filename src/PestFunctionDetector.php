@@ -8,6 +8,7 @@ use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
 
 /**
  * Shared utility for detecting and inspecting Pest function calls.
@@ -107,7 +108,7 @@ final class PestFunctionDetector
         }
 
         $firstArg = $args[0]->value;
-        if ($firstArg instanceof \PhpParser\Node\Scalar\String_) {
+        if ($firstArg instanceof String_) {
             return $firstArg->value;
         }
 

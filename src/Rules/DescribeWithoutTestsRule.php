@@ -9,6 +9,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\Nop;
 use PHPStan\Analyser\Scope;
@@ -93,7 +94,7 @@ final class DescribeWithoutTestsRule implements Rule
             }
 
             $name = $call->name->toString();
-            if ($name === 'it' || $name === 'test' || $name === 'describe') {
+            if (in_array($name, ['it', 'test', 'describe'], true)) {
                 return true;
             }
         }
@@ -109,7 +110,7 @@ final class DescribeWithoutTestsRule implements Rule
         }
 
         $firstArg = $args[0]->value;
-        if ($firstArg instanceof \PhpParser\Node\Scalar\String_) {
+        if ($firstArg instanceof String_) {
             return $firstArg->value;
         }
 

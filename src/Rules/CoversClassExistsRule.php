@@ -6,6 +6,7 @@ namespace PestStan\Rules;
 
 use Pest\PendingCalls\TestCall;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
@@ -99,7 +100,7 @@ final class CoversClassExistsRule implements Rule
         return [];
     }
 
-    private function extractClassName(Node\Expr $expr): ?string
+    private function extractClassName(Expr $expr): ?string
     {
         if ($expr instanceof ClassConstFetch && $expr->name instanceof Identifier && $expr->name->toString() === 'class' && $expr->class instanceof Name) {
             return $expr->class->toString();

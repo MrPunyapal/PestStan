@@ -10,7 +10,7 @@ PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework. Provid
 
 - PHP ^8.2
 - PHPStan ^2.0
-- Pest PHP ^3.0 or ^4.0
+- Pest PHP ^3.0, ^4.0, or ^5.0
 
 ## Installation
 
@@ -318,6 +318,87 @@ expect(42)->toBeJson();
 
 Methods requiring an iterable: `each`, `sequence`.  
 Methods requiring a string: `json`, `toStartWith`, `toEndWith`, `toBeJson`, `toBeDirectory`, `toBeFile`, `toBeReadableFile`, `toBeWritableFile`, `toBeReadableDirectory`, `toBeWritableDirectory`.
+
+### `pest.beforeAllThisUsage` — `$this` inside `beforeAll()`
+
+`beforeAll()` runs once in a static context before any tests in the file. `$this` is not available.
+
+```php
+beforeAll(function () {
+    $this->db = new Database; // ✘ beforeAll() runs in static context — $this is not available. Use beforeEach() instead.
+});
+```
+
+Use `beforeEach()` to run setup before each test with `$this` available.
+
+### `pest.todoWithClosure` — `->todo()` with a closure body
+
+`->todo()` marks a test as pending and the closure is **never executed** — any code inside the closure is dead code.
+
+```php
+it('should validate email', function () {
+    expect(validateEmail('test@example.com'))->toBeTrue();
+})->todo();
+// ✘ Test 'should validate email' is marked as todo() but still has a closure body — the code will not execute.
+```
+
+Options:
+- Remove the closure body: `it('should validate email')->todo()` — pure pending placeholder.
+- Use `->skip()` to preserve the code but skip execution.
+- Remove `->todo()` to make the test run.
+
+### `pest.missingAssertion` — Test with no assertions
+
+A test closure that neither calls `expect()` nor any `assert*()` method provides no safety guarantees.
+
+```php
+it('processes the order', function () {
+    $order = Order::create(['total' => 100]);
+    $order->process();
+    // ✘ Test 'processes the order' has no assertions. Did you forget expect()?
+});
+```
+
+### `pest.throwsClassNotFound` / `pest.invalidThrowsException` — Invalid `throws()` argument
+
+`throws()` accepts a class name that implements `Throwable`. Passing a non-existent class or a class that is not `Throwable` is caught at analysis time.
+
+```php
+it('fails', function () { ... })->throws('App\NonExistentException');
+// ✘ Class App\NonExistentException passed to throws() does not exist.
+
+it('fails', function () { ... })->throws(stdClass::class);
+// ✘ throws() expects a Throwable class, got stdClass.
+```
+
+### `pest.coversClassNotFound` / `pest.coversFunctionNotFound` — Non-existent symbol in `coversClass()`
+
+`coversClass()`, `coversTrait()`, and `coversFunction()` reference symbols by name. PestStan verifies those symbols exist.
+
+```php
+it('covers something', function () { ... })->coversClass('App\Nonexistent\Service');
+// ✘ Class App\Nonexistent\Service referenced in coversClass() does not exist.
+```
+
+### `pest.describeWithoutTests` — Empty `describe()` block
+
+A `describe()` block that contains no `it()` or `test()` calls (only hooks, or nothing at all) is likely a mistake.
+
+```php
+describe('UserService', function () {
+    beforeEach(fn () => null);
+    // ✘ describe() block 'UserService' contains no tests.
+});
+```
+
+### `pest.invalidGroupName` — Empty `group()` name
+
+`group()` requires at least one non-empty, non-whitespace string argument.
+
+```php
+it('example', fn () => null)->group('');
+// ✘ group() requires a non-empty string argument.
+```
 
 ### Ignoring rules
 

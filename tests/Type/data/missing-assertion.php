@@ -29,10 +29,9 @@ it('has assert method', function (): void {
 });
 
 // Valid: empty test closure (handled by EmptyTestClosureRule)
-it('empty test', function (): void {
-});
+it('empty test', function (): void {});
 
 // Valid: test with throws chain
 it('with throws', function (): void {
-    throw new \RuntimeException('error');
-})->throws(\RuntimeException::class);
+    throw new RuntimeException('error');
+})->throws(RuntimeException::class);

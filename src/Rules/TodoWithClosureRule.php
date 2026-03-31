@@ -36,7 +36,7 @@ final class TodoWithClosureRule implements Rule
         }
 
         $testCall = $this->findTestCall($node);
-        if ($testCall === null) {
+        if (! $testCall instanceof FuncCall) {
             return [];
         }
 
@@ -52,7 +52,7 @@ final class TodoWithClosureRule implements Rule
                 sprintf("Test '%s' is marked as todo() but still has a closure body — the code will not execute.", $description)
             )
                 ->identifier('pest.todoWithClosure')
-                ->tip('Remove the closure body or remove ->todo() to execute the test.')
+                ->tip('Remove the closure body to keep it as a pending placeholder, use ->skip() to preserve the code but skip execution, or remove ->todo() to run the test.')
                 ->build(),
         ];
     }

@@ -6,6 +6,7 @@ namespace PestStan\Rules;
 
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -45,6 +46,7 @@ final class MissingAssertionRule implements Rule
             if ($expr->name instanceof Identifier) {
                 $chainMethods[] = $expr->name->name;
             }
+
             $expr = $expr->var;
         }
 
@@ -106,7 +108,7 @@ final class MissingAssertionRule implements Rule
         return false;
     }
 
-    private function exprContainsAssertion(Node\Expr $expr): bool
+    private function exprContainsAssertion(Expr $expr): bool
     {
         if ($expr instanceof FuncCall && $expr->name instanceof Name) {
             $name = $expr->name->toString();

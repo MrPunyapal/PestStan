@@ -34,12 +34,12 @@ class TodoWithClosureRuleTest extends RuleTestCase
             [
                 "Test 'has closure and todo' is marked as todo() but still has a closure body — the code will not execute.",
                 6,
-                'Remove the closure body or remove ->todo() to execute the test.',
+                'Remove the closure body to keep it as a pending placeholder, use ->skip() to preserve the code but skip execution, or remove ->todo() to run the test.',
             ],
             [
                 "Test 'has closure and todo' is marked as todo() but still has a closure body — the code will not execute.",
                 10,
-                'Remove the closure body or remove ->todo() to execute the test.',
+                'Remove the closure body to keep it as a pending placeholder, use ->skip() to preserve the code but skip execution, or remove ->todo() to run the test.',
             ],
         ]);
     }

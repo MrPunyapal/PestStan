@@ -6,6 +6,7 @@ namespace PestStan\Rules;
 
 use Pest\PendingCalls\TestCall;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
@@ -17,6 +18,7 @@ use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\ObjectType;
+use Throwable;
 
 /**
  * Detects throws() calls with a class that is not Throwable.
@@ -69,7 +71,7 @@ final class InvalidThrowsExceptionRule implements Rule
         }
 
         $classReflection = $this->reflectionProvider->getClass($className);
-        if (! $classReflection->is(\Throwable::class)) {
+        if (! $classReflection->is(Throwable::class)) {
             return [
                 RuleErrorBuilder::message(
                     sprintf('throws() expects a Throwable class, got %s.', $className)
@@ -82,7 +84,7 @@ final class InvalidThrowsExceptionRule implements Rule
         return [];
     }
 
-    private function extractClassName(Node\Expr $expr): ?string
+    private function extractClassName(Expr $expr): ?string
     {
         if ($expr instanceof ClassConstFetch && $expr->name instanceof Identifier && $expr->name->toString() === 'class' && $expr->class instanceof Name) {
             return $expr->class->toString();
