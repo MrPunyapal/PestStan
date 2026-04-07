@@ -10,6 +10,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\Expression;
@@ -42,8 +43,8 @@ final class MissingAssertionRule implements Rule
 
         /** @var list<string> $chainMethods */
         $chainMethods = [];
-        while ($expr instanceof MethodCall) {
-            if ($expr->name instanceof Identifier) {
+        while ($expr instanceof MethodCall || $expr instanceof PropertyFetch) {
+            if ($expr instanceof MethodCall && $expr->name instanceof Identifier) {
                 $chainMethods[] = $expr->name->name;
             }
 
@@ -122,6 +123,10 @@ final class MissingAssertionRule implements Rule
                 return true;
             }
 
+            return $this->exprContainsAssertion($expr->var);
+        }
+
+        if ($expr instanceof PropertyFetch) {
             return $this->exprContainsAssertion($expr->var);
         }
 

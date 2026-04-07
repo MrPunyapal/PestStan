@@ -35,3 +35,13 @@ it('empty test', function (): void {});
 it('with throws', function (): void {
     throw new RuntimeException('error');
 })->throws(RuntimeException::class);
+
+// Valid: test with ->not chained expectation
+it('has not expectation', function (): void {
+    expect(1 + 1)->not->toBe(1);
+});
+
+// Valid: test with ->not->toBeNull chained expectation
+it('has not toBeNull', function (): void {
+    expect('hello')->not->toBeNull();
+});
