@@ -84,6 +84,12 @@ jobs:
           key: ${{ runner.os }}-php-${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-php-${{ matrix.php }}-
 
+      - name: Prepare dependencies
+        run: |
+          if [ "${{ matrix.php-version }}" == "8.2" ]; then
+            composer remove nunomaduro/pao --dev --no-interaction --no-update
+          fi
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
