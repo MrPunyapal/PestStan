@@ -26,6 +26,9 @@ jobs:
           key: ${{ runner.os }}-php-8.2-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-php-8.2-
 
+      - name: Prepare dependencies
+        run: composer remove nunomaduro/pao --dev --no-interaction --no-update
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
@@ -53,6 +56,9 @@ jobs:
           path: vendor
           key: ${{ runner.os }}-php-8.2-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-php-8.2-
+
+      - name: Prepare dependencies
+        run: composer remove nunomaduro/pao --dev --no-interaction --no-update
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -83,6 +89,12 @@ jobs:
           path: vendor
           key: ${{ runner.os }}-php-${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-php-${{ matrix.php }}-
+
+      - name: Prepare dependencies
+        run: |
+          if [ "${{ matrix.php }}" == "8.2" ]; then
+            composer remove nunomaduro/pao --dev --no-interaction --no-update
+          fi
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
