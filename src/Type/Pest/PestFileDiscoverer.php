@@ -14,6 +14,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
+use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
@@ -124,15 +125,9 @@ final class PestFileDiscoverer
     {
         try {
             $directoryIterator = new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS);
-            $filterIterator = new \RecursiveCallbackFilterIterator(
+            $filterIterator = new RecursiveCallbackFilterIterator(
                 $directoryIterator,
-                static function (SplFileInfo $current, string $key, \RecursiveDirectoryIterator $iterator): bool {
-                    if ($current->isDir() && $current->getFilename() === 'vendor') {
-                        return false;
-                    }
-
-                    return true;
-                },
+                static fn (SplFileInfo $current, string $key, RecursiveDirectoryIterator $iterator): bool => ! ($current->isDir() && $current->getFilename() === 'vendor'),
             );
             $iterator = new RecursiveIteratorIterator($filterIterator);
         } catch (UnexpectedValueException) {
