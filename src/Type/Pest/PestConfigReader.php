@@ -206,8 +206,11 @@ final class PestConfigReader
 
     private function isPestExtendOrUseMethod(MethodCall $methodCall): bool
     {
-        return $this->fileDiscoverer->isMethodNamed($methodCall, 'extend')
-            || $this->fileDiscoverer->isMethodNamed($methodCall, 'use');
+        if ($this->fileDiscoverer->isMethodNamed($methodCall, 'extend')) {
+            return true;
+        }
+
+        return $this->fileDiscoverer->isMethodNamed($methodCall, 'use');
     }
 
     private function isPestFuncCall(Expr $expr): bool

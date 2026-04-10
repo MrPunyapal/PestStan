@@ -7,6 +7,8 @@ namespace Tests\Type;
 use PestStan\Type\Pest\PestConfigReader;
 use PestStan\Type\Pest\PestFileDiscoverer;
 use PHPUnit\Framework\TestCase;
+use Tests\Type\Fixtures\CustomTestCase;
+use Tests\Type\Fixtures\HelperTrait;
 
 class PestConfigReaderTest extends TestCase
 {
@@ -25,29 +27,29 @@ class PestConfigReaderTest extends TestCase
     {
         $bindings = $this->reader->resolveBindings($this->fixtureDir . '/Feature/SomeTest.php');
 
-        $this->assertContains('Tests\Type\Fixtures\CustomTestCase', $bindings);
+        $this->assertContains(CustomTestCase::class, $bindings);
     }
 
     public function test_resolves_extend_binding_for_unit_directory(): void
     {
         $bindings = $this->reader->resolveBindings($this->fixtureDir . '/Unit/SomeTest.php');
 
-        $this->assertContains('Tests\Type\Fixtures\CustomTestCase', $bindings);
+        $this->assertContains(CustomTestCase::class, $bindings);
     }
 
     public function test_resolves_use_binding_for_helpers_subdirectory(): void
     {
         $bindings = $this->reader->resolveBindings($this->fixtureDir . '/Feature/Helpers/SomeTest.php');
 
-        $this->assertContains('Tests\Type\Fixtures\HelperTrait', $bindings);
+        $this->assertContains(HelperTrait::class, $bindings);
     }
 
     public function test_accumulates_parent_and_subdirectory_bindings(): void
     {
         $bindings = $this->reader->resolveBindings($this->fixtureDir . '/Feature/Helpers/SomeTest.php');
 
-        $this->assertContains('Tests\Type\Fixtures\CustomTestCase', $bindings);
-        $this->assertContains('Tests\Type\Fixtures\HelperTrait', $bindings);
+        $this->assertContains(CustomTestCase::class, $bindings);
+        $this->assertContains(HelperTrait::class, $bindings);
         $this->assertCount(2, $bindings);
     }
 
