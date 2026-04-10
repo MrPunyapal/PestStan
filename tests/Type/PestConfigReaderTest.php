@@ -50,7 +50,6 @@ class PestConfigReaderTest extends TestCase
 
         $this->assertContains(CustomTestCase::class, $bindings);
         $this->assertContains(HelperTrait::class, $bindings);
-        $this->assertCount(2, $bindings);
     }
 
     public function test_returns_empty_for_unmatched_path(): void

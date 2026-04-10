@@ -18,6 +18,7 @@ services:
         class: PestStan\Type\Pest\PestFileDiscoverer
         arguments:
             scanPaths: %paths%
+            rootDir: %currentWorkingDirectory%
 
     -
         class: PestStan\Type\Pest\PestConfigReader

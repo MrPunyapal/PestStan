@@ -31,6 +31,7 @@ final class PestFileDiscoverer
      */
     public function __construct(
         private readonly array $scanPaths,
+        private readonly string $rootDir = '',
     ) {
         $this->parser = (new ParserFactory)->createForNewestSupportedVersion();
     }
@@ -52,7 +53,13 @@ final class PestFileDiscoverer
             }
         }
 
-        foreach ($this->scanPaths as $scanPath) {
+        $scanPaths = $this->scanPaths;
+
+        if ($this->rootDir !== '') {
+            $scanPaths[] = $this->rootDir;
+        }
+
+        foreach ($scanPaths as $scanPath) {
             $realPath = realpath($scanPath);
             if ($realPath === false) {
                 continue;
@@ -60,6 +67,7 @@ final class PestFileDiscoverer
 
             $dir = is_file($realPath) ? dirname($realPath) : $realPath;
             $this->findPestFilesInDirectory($dir, $files);
+            $this->findPestFilesInAncestors($dir, $files);
         }
 
         return array_unique($files);
@@ -107,16 +115,26 @@ final class PestFileDiscoverer
     }
 
     /**
-     * Recursively finds Pest.php files in a directory using SPL iterators.
+     * Recursively finds Pest.php files in a directory using SPL iterators,
+     * skipping vendor directories.
      *
      * @param  string[]  $results
      */
     private function findPestFilesInDirectory(string $directory, array &$results): void
     {
         try {
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
+            $directoryIterator = new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS);
+            $filterIterator = new \RecursiveCallbackFilterIterator(
+                $directoryIterator,
+                static function (SplFileInfo $current, string $key, \RecursiveDirectoryIterator $iterator): bool {
+                    if ($current->isDir() && $current->getFilename() === 'vendor') {
+                        return false;
+                    }
+
+                    return true;
+                },
             );
+            $iterator = new RecursiveIteratorIterator($filterIterator);
         } catch (UnexpectedValueException) {
             return;
         }
@@ -134,6 +152,34 @@ final class PestFileDiscoverer
             $realPath = realpath($file->getPathname());
             if ($realPath !== false) {
                 $results[] = $realPath;
+            }
+        }
+    }
+
+    /**
+     * Walks up from a directory to find Pest.php files in ancestor directories.
+     *
+     * @param  string[]  $results
+     */
+    private function findPestFilesInAncestors(string $directory, array &$results): void
+    {
+        $current = $directory;
+
+        while (true) {
+            $parent = dirname($current);
+
+            if ($parent === $current) {
+                break;
+            }
+
+            $current = $parent;
+            $candidate = $current . DIRECTORY_SEPARATOR . 'Pest.php';
+
+            if (is_file($candidate)) {
+                $realPath = realpath($candidate);
+                if ($realPath !== false) {
+                    $results[] = $realPath;
+                }
             }
         }
     }
