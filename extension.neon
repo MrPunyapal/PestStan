@@ -110,6 +110,5 @@ rules:
     - PestStan\Rules\ExpectationValueTypeRule
     - PestStan\Rules\EmptyTestClosureRule
     - PestStan\Rules\BeforeAllThisUsageRule
-    - PestStan\Rules\MissingAssertionRule
     - PestStan\Rules\DescribeWithoutTestsRule
     - PestStan\Rules\InvalidGroupNameRule
