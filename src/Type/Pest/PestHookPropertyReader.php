@@ -175,12 +175,18 @@ final class PestHookPropertyReader
     }
 
     /**
-     * Checks if the expression is part of a uses() call chain.
+     * Checks if the expression is part of a uses(), pest()->extend(), or pest()->use() call chain.
      */
     private function isUsesChain(Expr $expr): bool
     {
         if ($expr instanceof FuncCall) {
-            return $expr->name instanceof Name && $expr->name->toString() === 'uses';
+            if (! $expr->name instanceof Name) {
+                return false;
+            }
+
+            $name = $expr->name->toString();
+
+            return $name === 'uses' || $name === 'pest';
         }
 
         if ($expr instanceof MethodCall) {

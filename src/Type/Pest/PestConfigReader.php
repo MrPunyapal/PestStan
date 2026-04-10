@@ -16,11 +16,11 @@ use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeFinder;
 
 /**
- * Parses Pest.php config files to resolve which TestCase class is bound via uses() or pest()->extend().
+ * Parses Pest.php config files to resolve which TestCase class is bound via uses(), pest()->extend(), or pest()->use().
  */
 final class PestConfigReader
 {
-    /** @var array<string, string> Maps normalized directory paths to fully-qualified TestCase class names */
+    /** @var array<string, list<string>> Maps normalized directory paths to fully-qualified class/trait names */
     private array $directoryMap = [];
 
     private bool $parsed = false;
@@ -34,30 +34,26 @@ final class PestConfigReader
     ) {}
 
     /**
-     * Resolves the TestCase class for a given file being analyzed.
+     * Resolves all classes and traits bound to the given file via uses(), pest()->extend(), or pest()->use().
+     *
+     * @return list<string>
      */
-    public function resolveTestCaseClass(string $filePath): ?string
+    public function resolveBindings(string $filePath): array
     {
         $this->ensureParsed();
 
         $normalizedFile = $this->fileDiscoverer->normalizePath($filePath);
+        $bindings = [];
 
-        $bestMatch = null;
-        $bestLength = 0;
-
-        foreach ($this->directoryMap as $directory => $className) {
+        foreach ($this->directoryMap as $directory => $classNames) {
             if (! str_starts_with($normalizedFile, $directory)) {
                 continue;
             }
 
-            $dirLength = strlen($directory);
-            if ($dirLength > $bestLength) {
-                $bestMatch = $className;
-                $bestLength = $dirLength;
-            }
+            array_push($bindings, ...$classNames);
         }
 
-        return $bestMatch;
+        return array_values(array_unique($bindings));
     }
 
     private function ensureParsed(): void
@@ -92,7 +88,7 @@ final class PestConfigReader
     }
 
     /**
-     * Extracts uses(TestCase::class)->in('Feature', 'Unit') bindings.
+     * Extracts uses(TestCase::class, Trait::class)->in('Feature', 'Unit') bindings.
      *
      * @param  Node[]  $stmts
      */
@@ -105,12 +101,12 @@ final class PestConfigReader
                 continue;
             }
 
-            $className = $this->resolveUsesClassName($methodCall->var);
-            if ($className === null) {
+            $classNames = $this->resolveUsesClassNames($methodCall->var);
+            if ($classNames === []) {
                 continue;
             }
 
-            $this->registerDirectoryBindings($className, $methodCall, $pestFileDir);
+            $this->registerDirectoryBindings($classNames, $methodCall, $pestFileDir);
         }
 
         $funcCalls = $nodeFinder->findInstanceOf($stmts, FuncCall::class);
@@ -123,15 +119,15 @@ final class PestConfigReader
                 continue;
             }
 
-            $className = $this->extractFirstClassArg($funcCall);
-            if ($className !== null) {
-                $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
+            $classNames = $this->extractAllClassArgs($funcCall);
+            if ($classNames !== []) {
+                $this->appendBindings($this->fileDiscoverer->normalizePath($pestFileDir) . '/', $classNames);
             }
         }
     }
 
     /**
-     * Extracts pest()->extend(TestCase::class)->in(...) bindings.
+     * Extracts pest()->extend(TestCase::class)->in(...) and pest()->use(Trait::class)->in(...) bindings.
      *
      * @param  Node[]  $stmts
      */
@@ -144,16 +140,16 @@ final class PestConfigReader
                 continue;
             }
 
-            $className = $this->resolvePestExtendClassName($methodCall->var);
-            if ($className === null) {
+            $classNames = $this->resolvePestExtendClassNames($methodCall->var);
+            if ($classNames === []) {
                 continue;
             }
 
-            $this->registerDirectoryBindings($className, $methodCall, $pestFileDir);
+            $this->registerDirectoryBindings($classNames, $methodCall, $pestFileDir);
         }
 
         foreach ($methodCalls as $methodCall) {
-            if (! $this->fileDiscoverer->isMethodNamed($methodCall, 'extend')) {
+            if (! $this->isPestExtendOrUseMethod($methodCall)) {
                 continue;
             }
 
@@ -165,47 +161,56 @@ final class PestConfigReader
                 continue;
             }
 
-            $className = $this->extractFirstClassArg($methodCall);
-            if ($className !== null) {
-                $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
+            $classNames = $this->extractAllClassArgs($methodCall);
+            if ($classNames !== []) {
+                $this->appendBindings($this->fileDiscoverer->normalizePath($pestFileDir) . '/', $classNames);
             }
         }
     }
 
     /**
-     * Walks up uses(...)->...->in() chain to find the class from uses() call.
+     * Walks up uses(...)->...->in() chain to find all classes/traits from uses() call.
+     *
+     * @return list<string>
      */
-    private function resolveUsesClassName(Expr $expr): ?string
+    private function resolveUsesClassNames(Expr $expr): array
     {
-        // Direct: uses(X::class)->in(...)
         if ($expr instanceof FuncCall && $this->isFuncNamed($expr, 'uses')) {
-            return $this->extractFirstClassArg($expr);
+            return $this->extractAllClassArgs($expr);
         }
 
-        // Chained: uses(X::class)->something()->in(...)
         if ($expr instanceof MethodCall) {
-            return $this->resolveUsesClassName($expr->var);
+            return $this->resolveUsesClassNames($expr->var);
         }
 
-        return null;
+        return [];
     }
 
     /**
-     * Walks up pest()->extend(X::class)->...->in() chain.
+     * Walks up pest()->extend(X::class)->...->in() or pest()->use(X::class)->...->in() chain.
+     *
+     * @return list<string>
      */
-    private function resolvePestExtendClassName(Expr $expr): ?string
+    private function resolvePestExtendClassNames(Expr $expr): array
     {
-        // Direct: pest()->extend(X::class)->in(...)
-        if ($expr instanceof MethodCall && $this->fileDiscoverer->isMethodNamed($expr, 'extend') && $this->isPestFuncCall($expr->var)) {
-            return $this->extractFirstClassArg($expr);
+        if ($expr instanceof MethodCall && $this->isPestExtendOrUseMethod($expr) && $this->isPestFuncCall($expr->var)) {
+            return $this->extractAllClassArgs($expr);
         }
 
-        // Chained: pest()->extend(X::class)->something()->in(...)
         if ($expr instanceof MethodCall) {
-            return $this->resolvePestExtendClassName($expr->var);
+            return $this->resolvePestExtendClassNames($expr->var);
         }
 
-        return null;
+        return [];
+    }
+
+    private function isPestExtendOrUseMethod(MethodCall $methodCall): bool
+    {
+        if ($this->fileDiscoverer->isMethodNamed($methodCall, 'extend')) {
+            return true;
+        }
+
+        return $this->fileDiscoverer->isMethodNamed($methodCall, 'use');
     }
 
     private function isPestFuncCall(Expr $expr): bool
@@ -237,45 +242,58 @@ final class PestConfigReader
     }
 
     /**
-     * Maps a class name to directories from an ->in() method call.
+     * Maps class/trait names to directories from an ->in() method call.
+     *
+     * @param  list<string>  $classNames
      */
-    private function registerDirectoryBindings(string $className, MethodCall $inMethodCall, string $pestFileDir): void
+    private function registerDirectoryBindings(array $classNames, MethodCall $inMethodCall, string $pestFileDir): void
     {
         $directories = $this->extractInDirectories($inMethodCall);
 
         if ($directories === []) {
-            $this->directoryMap[$this->fileDiscoverer->normalizePath($pestFileDir) . '/'] = $className;
+            $this->appendBindings($this->fileDiscoverer->normalizePath($pestFileDir) . '/', $classNames);
 
             return;
         }
 
         foreach ($directories as $dir) {
             $fullPath = $this->fileDiscoverer->normalizePath($pestFileDir . '/' . $dir) . '/';
-            $this->directoryMap[$fullPath] = $className;
+            $this->appendBindings($fullPath, $classNames);
         }
     }
 
     /**
-     * Extracts the class name from the first argument of a function/method call (e.g., uses(TestCase::class)).
+     * Appends class/trait names to the directory map.
+     *
+     * @param  list<string>  $classNames
      */
-    private function extractFirstClassArg(FuncCall|MethodCall $call): ?string
+    private function appendBindings(string $directory, array $classNames): void
     {
-        $args = $call->getArgs();
-        if ($args === []) {
-            return null;
+        if (! isset($this->directoryMap[$directory])) {
+            $this->directoryMap[$directory] = [];
         }
 
-        $firstArg = $args[0]->value;
+        array_push($this->directoryMap[$directory], ...$classNames);
+    }
 
-        if ($firstArg instanceof ClassConstFetch && $firstArg->name instanceof Identifier && $firstArg->name->toString() === 'class' && $firstArg->class instanceof Name) {
-            return $firstArg->class->toString();
+    /**
+     * Extracts all class/trait names from function/method call arguments.
+     *
+     * @return list<string>
+     */
+    private function extractAllClassArgs(FuncCall|MethodCall $call): array
+    {
+        $classNames = [];
+
+        foreach ($call->getArgs() as $arg) {
+            if ($arg->value instanceof ClassConstFetch && $arg->value->name instanceof Identifier && $arg->value->name->toString() === 'class' && $arg->value->class instanceof Name) {
+                $classNames[] = $arg->value->class->toString();
+            } elseif ($arg->value instanceof String_) {
+                $classNames[] = $arg->value->value;
+            }
         }
 
-        if ($firstArg instanceof String_) {
-            return $firstArg->value;
-        }
-
-        return null;
+        return $classNames;
     }
 
     private function isFuncNamed(FuncCall $funcCall, string $name): bool
@@ -297,7 +315,7 @@ final class PestConfigReader
                 continue;
             }
 
-            if ($this->resolveUsesClassName($methodCall->var) !== null && $this->chainContainsNode($methodCall->var, $funcCall)) {
+            if ($this->resolveUsesClassNames($methodCall->var) !== [] && $this->chainContainsNode($methodCall->var, $funcCall)) {
                 return true;
             }
         }
@@ -306,7 +324,7 @@ final class PestConfigReader
     }
 
     /**
-     * Checks whether a pest()->extend() MethodCall is part of a chain with ->in().
+     * Checks whether a pest()->extend() or pest()->use() MethodCall is part of a chain with ->in().
      *
      * @param  Node[]  $stmts
      */

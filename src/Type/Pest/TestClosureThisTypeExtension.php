@@ -11,6 +11,7 @@ use PHPStan\Reflection\ParameterReflection;
 use PHPStan\Type\FunctionParameterClosureThisExtension;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
+use PHPStan\Type\TypeCombinator;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -51,9 +52,17 @@ final class TestClosureThisTypeExtension implements FunctionParameterClosureThis
         ParameterReflection $parameter,
         Scope $scope
     ): Type {
-        $resolvedClass = $this->pestConfigReader->resolveTestCaseClass($scope->getFile());
-        $class = $resolvedClass ?? $this->testCaseClass;
+        $bindings = $this->pestConfigReader->resolveBindings($scope->getFile());
 
-        return new ObjectType($class);
+        if ($bindings === []) {
+            return new ObjectType($this->testCaseClass);
+        }
+
+        $types = array_map(
+            static fn (string $class): ObjectType => new ObjectType($class),
+            $bindings,
+        );
+
+        return count($types) === 1 ? $types[0] : TypeCombinator::intersect(...$types);
     }
 }
