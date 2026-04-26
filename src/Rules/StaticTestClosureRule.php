@@ -48,7 +48,6 @@ final class StaticTestClosureRule implements Rule
                 sprintf('Test closure passed to %s() must not be static. Remove the `static` keyword.', $name)
             )
                 ->identifier('pest.staticTestClosure')
-                ->tip('This can be auto-fixed with rector-pest.')
                 ->build(),
         ];
     }

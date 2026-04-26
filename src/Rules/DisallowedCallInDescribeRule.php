@@ -81,7 +81,6 @@ final class DisallowedCallInDescribeRule implements Rule
                 )
                     ->identifier(self::FORBIDDEN_FUNCTIONS[$name])
                     ->line($call->getStartLine())
-                    ->tip('This can be auto-fixed with rector-pest.')
                     ->build();
             }
 

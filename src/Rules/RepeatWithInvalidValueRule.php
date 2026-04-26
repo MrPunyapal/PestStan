@@ -54,7 +54,6 @@ final class RepeatWithInvalidValueRule implements Rule
                         sprintf('repeat() requires a value greater than 0, got %d.', $value)
                     )
                         ->identifier('pest.repeatInvalidValue')
-                        ->tip('This can be auto-fixed with rector-pest.')
                         ->build(),
                 ];
             }

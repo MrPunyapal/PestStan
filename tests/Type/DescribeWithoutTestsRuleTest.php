@@ -34,12 +34,14 @@ class DescribeWithoutTestsRuleTest extends RuleTestCase
             [
                 "describe() block 'empty group' contains no tests.",
                 6,
-                'This can be auto-fixed with rector-pest.',
             ],
             [
                 "describe() block 'hooks only' contains no tests.",
                 10,
-                'This can be auto-fixed with rector-pest.',
+            ],
+            [
+                "describe() block 'hooks with chain only' contains no tests.",
+                17,
             ],
         ]);
     }

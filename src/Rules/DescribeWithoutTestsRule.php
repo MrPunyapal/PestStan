@@ -58,7 +58,6 @@ final class DescribeWithoutTestsRule implements Rule
                     sprintf("describe() block '%s' contains no tests.", $description)
                 )
                     ->identifier('pest.describeWithoutTests')
-                    ->tip('This can be auto-fixed with rector-pest.')
                     ->build(),
             ];
         }
@@ -74,7 +73,6 @@ final class DescribeWithoutTestsRule implements Rule
                 sprintf("describe() block '%s' contains no tests.", $description)
             )
                 ->identifier('pest.describeWithoutTests')
-                ->tip('This can be auto-fixed with rector-pest.')
                 ->build(),
         ];
     }

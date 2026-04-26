@@ -34,12 +34,10 @@ class BeforeAllThisUsageRuleTest extends RuleTestCase
             [
                 'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.',
                 7,
-                'This can be auto-fixed with rector-pest.',
             ],
             [
                 'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.',
                 11,
-                'This can be auto-fixed with rector-pest.',
             ],
         ]);
     }

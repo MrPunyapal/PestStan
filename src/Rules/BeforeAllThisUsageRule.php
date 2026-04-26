@@ -78,7 +78,6 @@ final class BeforeAllThisUsageRule implements Rule
             )
                 ->identifier('pest.beforeAllThisUsage')
                 ->line($expr->getStartLine())
-                ->tip('This can be auto-fixed with rector-pest.')
                 ->build();
 
             return;
@@ -90,7 +89,6 @@ final class BeforeAllThisUsageRule implements Rule
             )
                 ->identifier('pest.beforeAllThisUsage')
                 ->line($expr->getStartLine())
-                ->tip('This can be auto-fixed with rector-pest.')
                 ->build();
 
             return;

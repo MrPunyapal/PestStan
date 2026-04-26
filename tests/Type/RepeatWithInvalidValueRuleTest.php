@@ -34,12 +34,10 @@ class RepeatWithInvalidValueRuleTest extends RuleTestCase
             [
                 'repeat() requires a value greater than 0, got 0.',
                 6,
-                'This can be auto-fixed with rector-pest.',
             ],
             [
                 'repeat() requires a value greater than 0, got -1.',
                 11,
-                'This can be auto-fixed with rector-pest.',
             ],
         ]);
     }
