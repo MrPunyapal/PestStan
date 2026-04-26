@@ -13,6 +13,13 @@ describe('hooks only', function (): void { // line 10
     });
 });
 
+// Errors: describe with chained hooks only (no tests)
+describe('hooks with chain only', function (): void { // line 17
+    beforeEach(function (): void {
+        // setup
+    })->skip();
+});
+
 // Valid: describe with tests
 describe('valid group', function (): void {
     it('has a test', function (): void {
@@ -27,4 +34,16 @@ describe('nested group', function (): void {
             expect(true)->toBeTrue();
         });
     });
+});
+
+// valid: describe with throwsNoExceptions
+describe('test something', function () {
+    it('throws no exceptions', function () {
+        $result = 1 + 1;
+    })->throwsNoExceptions();
+});
+
+// valid: describe with todo test
+describe('todo test', function (): void {
+    it('todo', function (): void {});
 });

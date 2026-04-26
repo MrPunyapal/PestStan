@@ -6,8 +6,10 @@ namespace PestStan\Rules;
 
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Expression;
@@ -84,22 +86,30 @@ final class DescribeWithoutTestsRule implements Rule
                 continue;
             }
 
-            if (! $stmt->expr instanceof FuncCall) {
+            $call = $this->extractRootCall($stmt->expr);
+            if (! $call instanceof FuncCall) {
                 continue;
             }
 
-            $call = $stmt->expr;
             if (! $call->name instanceof Name) {
                 continue;
             }
 
-            $name = $call->name->toString();
-            if (in_array($name, ['it', 'test', 'describe'], true)) {
+            if (PestFunctionDetector::isTestFunction($call) || PestFunctionDetector::isDescribeFunction($call)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private function extractRootCall(Expr $expr): ?FuncCall
+    {
+        while ($expr instanceof MethodCall) {
+            $expr = $expr->var;
+        }
+
+        return $expr instanceof FuncCall ? $expr : null;
     }
 
     private function extractDescribeDescription(FuncCall $node): string
