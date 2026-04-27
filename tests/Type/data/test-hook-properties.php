@@ -230,3 +230,15 @@ function testBeforeEachWithOnlyLocalStatements(): void
         assertType('mixed', $this->local);
     });
 }
+
+function testVarThisAnnotationDoesNotOverridePropertyType(): void
+{
+    beforeEach(function (): void {
+        /** @var \Tests\TestCase $this */
+        $this->post = new Post;
+    });
+
+    it('ignores @var $this and uses actual assigned type', function (): void {
+        assertType(Post::class, $this->post);
+    });
+}

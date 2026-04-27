@@ -364,6 +364,10 @@ final class PestHookPropertyReader
         $typeName = $matches[1];
         $docVarName = $matches[2] ?? null;
 
+        if ($docVarName === 'this') {
+            return null;
+        }
+
         if ($varName !== null && $docVarName !== null && $docVarName !== $varName) {
             return null;
         }
