@@ -6,6 +6,7 @@ namespace TestHookProperties;
 
 use function PHPStan\Testing\assertType;
 
+use Tests\TestCase;
 use Tests\Type\Fixtures\Author;
 use Tests\Type\Fixtures\Post;
 
@@ -234,7 +235,7 @@ function testBeforeEachWithOnlyLocalStatements(): void
 function testVarThisAnnotationDoesNotOverridePropertyType(): void
 {
     beforeEach(function (): void {
-        /** @var \Tests\TestCase $this */
+        /** @var TestCase $this */
         $this->post = new Post;
     });
 
