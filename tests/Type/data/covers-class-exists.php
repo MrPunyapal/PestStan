@@ -13,3 +13,13 @@ it('covers non-existent', function (): void {
 it('covers existing', function (): void {
     expect(true)->toBeTrue();
 })->coversClass(Post::class);
+
+// Errors: coversClass with invalid second argument
+it('covers mixed class list', function (): void {
+    expect(true)->toBeTrue();
+})->coversClass(Post::class, 'App\\NonExistent\\SecondFakeClass'); // line 18
+
+// Errors: coversFunction with invalid second argument
+it('covers mixed functions', function (): void {
+    expect(true)->toBeTrue();
+})->coversFunction('strlen', 'missing_test_helper'); // line 23

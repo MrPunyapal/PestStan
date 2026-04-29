@@ -66,38 +66,37 @@ final class CoversClassExistsRule implements Rule
             return [];
         }
 
-        $symbolName = $this->extractClassName($args[0]->value);
-        if ($symbolName === null) {
-            return [];
-        }
-
         $symbolType = self::COVERS_METHODS[$methodName];
+        $errors = [];
 
-        if ($symbolType === 'Function') {
-            if (! $this->reflectionProvider->hasFunction(new Name($symbolName), null)) {
-                return [
-                    RuleErrorBuilder::message(
+        foreach ($args as $arg) {
+            $symbolName = $this->extractClassName($arg->value);
+            if ($symbolName === null) {
+                continue;
+            }
+
+            if ($symbolType === 'Function') {
+                if (! $this->reflectionProvider->hasFunction(new Name($symbolName), null)) {
+                    $errors[] = RuleErrorBuilder::message(
                         sprintf('Function %s() referenced in %s() does not exist.', $symbolName, $methodName)
                     )
                         ->identifier('pest.coversFunctionNotFound')
-                        ->build(),
-                ];
+                        ->build();
+                }
+
+                continue;
             }
 
-            return [];
-        }
-
-        if (! $this->reflectionProvider->hasClass($symbolName)) {
-            return [
-                RuleErrorBuilder::message(
+            if (! $this->reflectionProvider->hasClass($symbolName)) {
+                $errors[] = RuleErrorBuilder::message(
                     sprintf('%s %s referenced in %s() does not exist.', $symbolType, $symbolName, $methodName)
                 )
                     ->identifier('pest.coversClassNotFound')
-                    ->build(),
-            ];
+                    ->build();
+            }
         }
 
-        return [];
+        return $errors;
     }
 
     private function extractClassName(Expr $expr): ?string
