@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace PestStan\Type\Pest;
 
+use Pest\Configuration;
 use Pest\Expectation;
+use Pest\PendingCalls\AfterEachCall;
+use Pest\PendingCalls\BeforeEachCall;
 use Pest\PendingCalls\DescribeCall;
 use Pest\PendingCalls\TestCall;
+use Pest\PendingCalls\UsesCall;
 use PhpParser\Node\Expr\FuncCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\FunctionReflection;
@@ -23,17 +27,32 @@ final class PestFunctionReturnTypeExtension implements DynamicFunctionReturnType
 {
     /** @var array<string, class-string> Maps function names to return class names */
     private const FUNCTION_RETURN_TYPES = [
+        'pest' => Configuration::class,
+        'uses' => UsesCall::class,
         'it' => TestCall::class,
         'test' => TestCall::class,
         'todo' => TestCall::class,
         'describe' => DescribeCall::class,
+        'beforeEach' => BeforeEachCall::class,
+        'afterEach' => AfterEachCall::class,
+    ];
+
+    /** @var list<string> */
+    private const NULL_RETURN_TYPES = [
+        'beforeAll',
+        'afterAll',
+        'dataset',
+        'covers',
+        'mutates',
     ];
 
     public function isFunctionSupported(FunctionReflection $functionReflection): bool
     {
         $name = $functionReflection->getName();
 
-        return $name === 'expect' || isset(self::FUNCTION_RETURN_TYPES[$name]);
+        return $name === 'expect'
+            || isset(self::FUNCTION_RETURN_TYPES[$name])
+            || in_array($name, self::NULL_RETURN_TYPES, true);
     }
 
     public function getTypeFromFunctionCall(
@@ -45,6 +64,10 @@ final class PestFunctionReturnTypeExtension implements DynamicFunctionReturnType
 
         if ($name === 'expect') {
             return $this->resolveExpect($functionCall, $scope);
+        }
+
+        if (in_array($name, self::NULL_RETURN_TYPES, true)) {
+            return new NullType;
         }
 
         return new ObjectType(self::FUNCTION_RETURN_TYPES[$name]);
