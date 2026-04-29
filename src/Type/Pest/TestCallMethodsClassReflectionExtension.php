@@ -12,6 +12,7 @@ use PHPStan\Reflection\ClassReflection;
 use PHPStan\Reflection\MethodReflection;
 use PHPStan\Reflection\MethodsClassReflectionExtension;
 use PHPStan\Reflection\ReflectionProvider;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Resolves methods on TestCall that originate from its @mixin types.
@@ -32,8 +33,10 @@ final class TestCallMethodsClassReflectionExtension implements MethodsClassRefle
         HigherOrderCallables::class,
     ];
 
+    /** @param class-string $testCaseClass */
     public function __construct(
         private readonly ReflectionProvider $reflectionProvider,
+        private readonly string $testCaseClass = TestCase::class,
     ) {}
 
     public function hasMethod(ClassReflection $classReflection, string $methodName): bool
@@ -46,11 +49,8 @@ final class TestCallMethodsClassReflectionExtension implements MethodsClassRefle
             return false;
         }
 
-        foreach (self::MIXIN_CLASSES as $mixinClass) {
-            if (
-                $this->reflectionProvider->hasClass($mixinClass)
-                && $this->reflectionProvider->getClass($mixinClass)->hasNativeMethod($methodName)
-            ) {
+        foreach ($this->mixinClasses() as $mixinClass) {
+            if ($this->hasPublicMixinMethod($mixinClass, $methodName)) {
                 return true;
             }
         }
@@ -60,18 +60,36 @@ final class TestCallMethodsClassReflectionExtension implements MethodsClassRefle
 
     public function getMethod(ClassReflection $classReflection, string $methodName): MethodReflection
     {
-        foreach (self::MIXIN_CLASSES as $mixinClass) {
-            if (! $this->reflectionProvider->hasClass($mixinClass)) {
-                continue;
-            }
-
-            $mixinReflection = $this->reflectionProvider->getClass($mixinClass);
-
-            if ($mixinReflection->hasNativeMethod($methodName)) {
-                return $mixinReflection->getNativeMethod($methodName);
+        foreach ($this->mixinClasses() as $mixinClass) {
+            if ($this->hasPublicMixinMethod($mixinClass, $methodName)) {
+                return $this->reflectionProvider->getClass($mixinClass)->getNativeMethod($methodName);
             }
         }
 
         throw new LogicException(sprintf('Method %s not found on any TestCall mixin class.', $methodName));
+    }
+
+    /** @return list<class-string> */
+    private function mixinClasses(): array
+    {
+        if ($this->testCaseClass === TestCase::class) {
+            return self::MIXIN_CLASSES;
+        }
+
+        return [...self::MIXIN_CLASSES, $this->testCaseClass];
+    }
+
+    private function hasPublicMixinMethod(string $mixinClass, string $methodName): bool
+    {
+        if (! $this->reflectionProvider->hasClass($mixinClass)) {
+            return false;
+        }
+
+        $mixinReflection = $this->reflectionProvider->getClass($mixinClass);
+        if (! $mixinReflection->hasNativeMethod($methodName)) {
+            return false;
+        }
+
+        return $mixinReflection->getNativeMethod($methodName)->isPublic();
     }
 }
