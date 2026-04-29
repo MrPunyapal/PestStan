@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### What's Changed
 
 * feat: expose public methods from a configured custom `testCaseClass` on `TestCall` chains
+* feat: explicitly type additional Pest global helpers in `PestFunctionReturnTypeExtension`
+* fix: validate every variadic symbol passed to `coversClass()`, `coversTrait()`, and `coversFunction()`
+* fix: treat `todo()` as a valid test definition inside `describe()` blocks
 * docs: remove README entries for rules that are no longer shipped
+* docs: sync helper-return and extension architecture docs with the shipped code
 
 ## 0.2.7 - 2026-04-26
 

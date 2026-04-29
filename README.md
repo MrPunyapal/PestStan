@@ -173,8 +173,14 @@ Accurate return types for all Pest global functions:
 | Function | Return Type |
 |----------|-------------|
 | `expect($value)` | `Expectation<TValue>` |
+| `pest()` | `Configuration` |
+| `uses(...)` | `UsesCall` |
 | `it()` / `test()` / `todo()` | `TestCall` |
 | `describe()` | `DescribeCall` |
+| `beforeEach()` | `BeforeEachCall` |
+| `afterEach()` | `AfterEachCall` |
+| `beforeAll()` / `afterAll()` | `null` |
+| `dataset()` / `covers()` / `mutates()` | `null` |
 
 ### `not()` and `each()` Return Types
 
