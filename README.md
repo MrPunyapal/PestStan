@@ -1,10 +1,10 @@
 # PestStan
 
-PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework. Provides type-safe expectations, proper `$this` binding in test closures, and accurate return types for all Pest functions.
-
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/mrpunyapal/peststan.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/peststan)
 [![Total Downloads](https://img.shields.io/packagist/dt/mrpunyapal/peststan.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/peststan)
 [![CI](https://github.com/mrpunyapal/peststan/actions/workflows/ci.yml/badge.svg)](https://github.com/mrpunyapal/peststan/actions/workflows/ci.yml)
+
+PHPStan extension for [Pest PHP](https://pestphp.com/) testing framework. Provides type-safe expectations, proper `$this` binding in test closures, and accurate return types for all Pest functions.
 
 ## Requirements
 
