@@ -5,40 +5,26 @@ declare(strict_types=1);
 namespace Tests\Rules;
 
 use PestStan\Rules\BeforeAllThisUsageRule;
-use PHPStan\Rules\Rule;
-use PHPStan\Testing\RuleTestCase;
+use Tests\RuleTestCase;
 
-/**
- * @extends RuleTestCase<BeforeAllThisUsageRule>
- */
-class BeforeAllThisUsageRuleTest extends RuleTestCase
-{
-    protected function getRule(): Rule
-    {
-        return new BeforeAllThisUsageRule;
-    }
+beforeAll(function (): void {
+    RuleTestCase::$rule = new BeforeAllThisUsageRule;
+    RuleTestCase::$additionalConfigFiles = [
+        __DIR__ . '/../extension.neon',
+    ];
+});
 
-    /** @return string[] */
-    public static function getAdditionalConfigFiles(): array
-    {
-        return [
-            __DIR__ . '/../extension.neon',
-        ];
-    }
-
-    public function test_this_usage_in_before_all_is_reported(): void
-    {
-        $this->analyse([
-            __DIR__ . '/data/before-all-this-usage.php',
-        ], [
-            [
-                'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.',
-                7,
-            ],
-            [
-                'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.',
-                11,
-            ],
-        ]);
-    }
-}
+test('this usage in before all is reported', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/before-all-this-usage.php',
+    ], [
+        [
+            'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.',
+            7,
+        ],
+        [
+            'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.',
+            11,
+        ],
+    ]);
+});

@@ -28,4 +28,12 @@ abstract class RuleTestCase extends RuleTestCaseCore
     {
         return self::$additionalConfigFiles;
     }
+
+    /**
+     * @param  class-string<Rule>  $ruleClass
+     */
+    public static function resolveRule(string $ruleClass): Rule
+    {
+        return self::getContainer()->getByType($ruleClass);
+    }
 }

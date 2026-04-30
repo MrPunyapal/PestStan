@@ -5,48 +5,34 @@ declare(strict_types=1);
 namespace Tests\Rules;
 
 use PestStan\Rules\DisallowedCallInDescribeRule;
-use PHPStan\Rules\Rule;
-use PHPStan\Testing\RuleTestCase;
+use Tests\RuleTestCase;
 
-/**
- * @extends RuleTestCase<DisallowedCallInDescribeRule>
- */
-class DisallowedCallInDescribeRuleTest extends RuleTestCase
-{
-    protected function getRule(): Rule
-    {
-        return new DisallowedCallInDescribeRule;
-    }
+beforeAll(function (): void {
+    RuleTestCase::$rule = new DisallowedCallInDescribeRule;
+    RuleTestCase::$additionalConfigFiles = [
+        __DIR__ . '/../extension.neon',
+    ];
+});
 
-    /** @return string[] */
-    public static function getAdditionalConfigFiles(): array
-    {
-        return [
-            __DIR__ . '/../extension.neon',
-        ];
-    }
-
-    public function test_before_all_in_describe_is_reported(): void
-    {
-        $this->analyse([
-            __DIR__ . '/data/disallowed-call-in-describe.php',
-        ], [
-            [
-                'beforeAll() cannot be used inside describe() blocks. Use beforeEach() instead.',
-                6,
-            ],
-            [
-                'afterAll() cannot be used inside describe() blocks. Use afterEach() instead.',
-                16,
-            ],
-            [
-                'beforeAll() cannot be used inside describe() blocks. Use beforeEach() instead.',
-                26,
-            ],
-            [
-                'afterAll() cannot be used inside describe() blocks. Use afterEach() instead.',
-                29,
-            ],
-        ]);
-    }
-}
+test('before all in describe is reported', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/disallowed-call-in-describe.php',
+    ], [
+        [
+            'beforeAll() cannot be used inside describe() blocks. Use beforeEach() instead.',
+            6,
+        ],
+        [
+            'afterAll() cannot be used inside describe() blocks. Use afterEach() instead.',
+            16,
+        ],
+        [
+            'beforeAll() cannot be used inside describe() blocks. Use beforeEach() instead.',
+            26,
+        ],
+        [
+            'afterAll() cannot be used inside describe() blocks. Use afterEach() instead.',
+            29,
+        ],
+    ]);
+});

@@ -5,40 +5,26 @@ declare(strict_types=1);
 namespace Tests\Rules;
 
 use PestStan\Rules\EmptyTestClosureRule;
-use PHPStan\Rules\Rule;
-use PHPStan\Testing\RuleTestCase;
+use Tests\RuleTestCase;
 
-/**
- * @extends RuleTestCase<EmptyTestClosureRule>
- */
-class EmptyTestClosureRuleTest extends RuleTestCase
-{
-    protected function getRule(): Rule
-    {
-        return new EmptyTestClosureRule;
-    }
+beforeAll(function (): void {
+    RuleTestCase::$rule = new EmptyTestClosureRule;
+    RuleTestCase::$additionalConfigFiles = [
+        __DIR__ . '/../extension.neon',
+    ];
+});
 
-    /** @return string[] */
-    public static function getAdditionalConfigFiles(): array
-    {
-        return [
-            __DIR__ . '/../extension.neon',
-        ];
-    }
-
-    public function test_empty_closures_are_reported(): void
-    {
-        $this->analyse([
-            __DIR__ . '/data/empty-test-closure.php',
-        ], [
-            [
-                "Test 'empty it closure' has an empty closure body. Add assertions or chain ->todo() to mark as pending.",
-                5,
-            ],
-            [
-                "Test 'empty test closure' has an empty closure body. Add assertions or chain ->todo() to mark as pending.",
-                7,
-            ],
-        ]);
-    }
-}
+test('empty closures are reported', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/empty-test-closure.php',
+    ], [
+        [
+            "Test 'empty it closure' has an empty closure body. Add assertions or chain ->todo() to mark as pending.",
+            5,
+        ],
+        [
+            "Test 'empty test closure' has an empty closure body. Add assertions or chain ->todo() to mark as pending.",
+            7,
+        ],
+    ]);
+});
