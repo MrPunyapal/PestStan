@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Type;
+namespace Tests\Rules;
 
 use PestStan\Rules\RedundantExpectationRule;
 use PHPStan\Rules\Rule;

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Type;
+namespace Tests\Rules;
 
 use PestStan\Rules\ImpossibleExpectationRule;
 use PHPStan\Rules\Rule;
-use PHPStan\Testing\RuleTestCase;
+use Tests\RuleTestCase;
 
 /**
  * @extends RuleTestCase<ImpossibleExpectationRule>
@@ -15,7 +15,7 @@ class ImpossibleExpectationRuleTest extends RuleTestCase
 {
     protected function getRule(): Rule
     {
-        return new ImpossibleExpectationRule;
+        return new ImpossibleExpectationRule();
     }
 
     /** @return string[] */
