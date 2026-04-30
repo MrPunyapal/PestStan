@@ -21,11 +21,11 @@ use PhpParser\Node\Stmt\Expression;
 use PhpParser\NodeFinder;
 
 /**
- * Parses test files and Pest.php config files to extract dynamic property expressions from beforeEach/beforeAll hooks.
+ * Parses test files and Pest.php config files to extract dynamic property expressions from beforeEach hooks.
  */
 final class PestHookPropertyReader
 {
-    private const HOOK_FUNCTIONS = ['beforeEach', 'beforeAll'];
+    private const HOOK_FUNCTIONS = ['beforeEach'];
 
     /** @var array<string, array<string, list<Expr>>> Maps normalized file paths to property name → list of RHS Exprs */
     private array $filePropertyCache = [];
@@ -271,7 +271,13 @@ final class PestHookPropertyReader
                 continue;
             }
 
-            if ($var->var->name !== 'this') {
+            $thisVariable = $var->var;
+
+            if (! is_string($thisVariable->name)) {
+                continue;
+            }
+
+            if ($thisVariable->name !== 'this') {
                 continue;
             }
 

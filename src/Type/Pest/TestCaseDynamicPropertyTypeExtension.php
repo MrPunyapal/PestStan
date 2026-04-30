@@ -18,7 +18,7 @@ use PHPStan\Type\TypeCombinator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Resolves dynamic property types on TestCase from beforeEach/beforeAll hook assignments.
+ * Resolves dynamic property types on TestCase from beforeEach hook assignments.
  */
 final class TestCaseDynamicPropertyTypeExtension implements ExpressionTypeResolverExtension
 {
