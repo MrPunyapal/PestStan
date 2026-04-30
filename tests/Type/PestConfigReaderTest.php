@@ -6,56 +6,60 @@ namespace Tests\Type;
 
 use PestStan\Type\Pest\PestConfigReader;
 use PestStan\Type\Pest\PestFileDiscoverer;
-use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Tests\Type\Fixtures\CustomTestCase;
 use Tests\Type\Fixtures\HelperTrait;
 
-class PestConfigReaderTest extends TestCase
-{
-    private PestConfigReader $reader;
+$makeReader = static function (): array {
+    $fixtureDir = realpath(__DIR__ . '/Fixtures/pestconfig');
 
-    private string $fixtureDir;
-
-    protected function setUp(): void
-    {
-        $this->fixtureDir = realpath(__DIR__ . '/Fixtures/pestconfig');
-        $discoverer = new PestFileDiscoverer([$this->fixtureDir]);
-        $this->reader = new PestConfigReader([], $discoverer);
+    if ($fixtureDir === false) {
+        throw new RuntimeException('Fixture directory not found.');
     }
 
-    public function test_resolves_extend_binding_for_feature_directory(): void
-    {
-        $bindings = $this->reader->resolveBindings($this->fixtureDir . '/Feature/SomeTest.php');
+    $discoverer = new PestFileDiscoverer([$fixtureDir]);
 
-        $this->assertContains(CustomTestCase::class, $bindings);
-    }
+    return [$fixtureDir, new PestConfigReader([], $discoverer)];
+};
 
-    public function test_resolves_extend_binding_for_unit_directory(): void
-    {
-        $bindings = $this->reader->resolveBindings($this->fixtureDir . '/Unit/SomeTest.php');
+test('resolves extend binding for feature directory', function () use ($makeReader): void {
+    [$fixtureDir, $reader] = $makeReader();
 
-        $this->assertContains(CustomTestCase::class, $bindings);
-    }
+    $bindings = $reader->resolveBindings($fixtureDir . '/Feature/SomeTest.php');
 
-    public function test_resolves_use_binding_for_helpers_subdirectory(): void
-    {
-        $bindings = $this->reader->resolveBindings($this->fixtureDir . '/Feature/Helpers/SomeTest.php');
+    expect($bindings)->toContain(CustomTestCase::class);
+});
 
-        $this->assertContains(HelperTrait::class, $bindings);
-    }
+test('resolves extend binding for unit directory', function () use ($makeReader): void {
+    [$fixtureDir, $reader] = $makeReader();
 
-    public function test_accumulates_parent_and_subdirectory_bindings(): void
-    {
-        $bindings = $this->reader->resolveBindings($this->fixtureDir . '/Feature/Helpers/SomeTest.php');
+    $bindings = $reader->resolveBindings($fixtureDir . '/Unit/SomeTest.php');
 
-        $this->assertContains(CustomTestCase::class, $bindings);
-        $this->assertContains(HelperTrait::class, $bindings);
-    }
+    expect($bindings)->toContain(CustomTestCase::class);
+});
 
-    public function test_returns_empty_for_unmatched_path(): void
-    {
-        $bindings = $this->reader->resolveBindings('/some/other/path/Test.php');
+test('resolves use binding for helpers subdirectory', function () use ($makeReader): void {
+    [$fixtureDir, $reader] = $makeReader();
 
-        $this->assertSame([], $bindings);
-    }
-}
+    $bindings = $reader->resolveBindings($fixtureDir . '/Feature/Helpers/SomeTest.php');
+
+    expect($bindings)->toContain(HelperTrait::class);
+});
+
+test('accumulates parent and subdirectory bindings', function () use ($makeReader): void {
+    [$fixtureDir, $reader] = $makeReader();
+
+    $bindings = $reader->resolveBindings($fixtureDir . '/Feature/Helpers/SomeTest.php');
+
+    expect($bindings)
+        ->toContain(CustomTestCase::class)
+        ->toContain(HelperTrait::class);
+});
+
+test('returns empty for unmatched path', function () use ($makeReader): void {
+    [, $reader] = $makeReader();
+
+    $bindings = $reader->resolveBindings('/some/other/path/Test.php');
+
+    expect($bindings)->toBeEmpty();
+});
