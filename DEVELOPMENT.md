@@ -83,7 +83,7 @@ All type information is provided through PHPStan dynamic type extensions (no stu
 - `it()` / `test()` / `todo()` → `TestCall`
 - `describe()` → `DescribeCall`
 - `beforeEach()` / `afterEach()` → pending call wrappers
-- `fixture()` → `string`
+- `fixture()` → `string` when the installed Pest version provides the helper
 - `beforeAll()` / `afterAll()` / `dataset()` / `covers()` / `mutates()` → `null`
 
 ### 2. ExpectationMethodReturnTypeExtension

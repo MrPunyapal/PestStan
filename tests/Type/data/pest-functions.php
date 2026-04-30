@@ -73,5 +73,7 @@ function testMutatesReturnType(): void
 
 function testFixtureReturnType(): void
 {
-    assertType('string', fixture('example.json'));
+    if (function_exists('fixture')) {
+        assertType('string', fixture('example.json'));
+    }
 }

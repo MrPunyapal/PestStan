@@ -168,7 +168,7 @@ parameters:
 
 ### Pest Function Return Types
 
-Accurate return types for all Pest global functions:
+Accurate return types for Pest's core global functions, plus newer helpers when they exist in the installed Pest version:
 
 | Function | Return Type |
 |----------|-------------|
@@ -179,7 +179,7 @@ Accurate return types for all Pest global functions:
 | `describe()` | `DescribeCall` |
 | `beforeEach()` | `BeforeEachCall` |
 | `afterEach()` | `AfterEachCall` |
-| `fixture()` | `string` |
+| `fixture()` | `string` when available |
 | `beforeAll()` / `afterAll()` | `null` |
 | `dataset()` / `covers()` / `mutates()` | `null` |
 
