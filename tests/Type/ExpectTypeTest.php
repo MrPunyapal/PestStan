@@ -32,6 +32,10 @@ test('pest function types', function (string $assertType, string $file, mixed ..
     $this->assertFileAsserts($assertType, $file, ...$args);
 })->with(function (): Iterator {
     yield from TestCase::gatherAssertTypes(__DIR__ . '/data/pest-functions.php');
+
+    if (function_exists('fixture')) {
+        yield from TestCase::gatherAssertTypes(__DIR__ . '/data/pest-functions-fixture.php');
+    }
 });
 
 test('arch expectation types', function (string $assertType, string $file, mixed ...$args): void {

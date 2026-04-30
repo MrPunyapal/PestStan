@@ -70,10 +70,3 @@ function testMutatesReturnType(): void
 {
     assertType('null', mutates(TestCase::class));
 }
-
-function testFixtureReturnType(): void
-{
-    if (function_exists('fixture')) {
-        assertType('string', fixture('example.json'));
-    }
-}
