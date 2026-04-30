@@ -16,6 +16,7 @@ return RectorConfig::configure()
     ->withSkip([
         ReadOnlyClassRector::class,
         __DIR__ . '/tests/Type/data',
+        __DIR__ . '/tests/Rules/data',
     ])
     ->withSets([
         PestLevelSetList::UP_TO_PEST_30,
