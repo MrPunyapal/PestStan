@@ -70,3 +70,8 @@ function testMutatesReturnType(): void
 {
     assertType('null', mutates(TestCase::class));
 }
+
+function testFixtureReturnType(): void
+{
+    assertType('string', fixture('example.json'));
+}

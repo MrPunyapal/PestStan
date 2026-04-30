@@ -18,6 +18,7 @@ use PHPStan\Type\DynamicFunctionReturnTypeExtension;
 use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\NullType;
 use PHPStan\Type\ObjectType;
+use PHPStan\Type\StringType;
 use PHPStan\Type\Type;
 
 /**
@@ -46,12 +47,18 @@ final class PestFunctionReturnTypeExtension implements DynamicFunctionReturnType
         'mutates',
     ];
 
+    /** @var list<string> */
+    private const STRING_RETURN_TYPES = [
+        'fixture',
+    ];
+
     public function isFunctionSupported(FunctionReflection $functionReflection): bool
     {
         $name = $functionReflection->getName();
 
         return $name === 'expect'
             || isset(self::FUNCTION_RETURN_TYPES[$name])
+            || in_array($name, self::STRING_RETURN_TYPES, true)
             || in_array($name, self::NULL_RETURN_TYPES, true);
     }
 
@@ -68,6 +75,10 @@ final class PestFunctionReturnTypeExtension implements DynamicFunctionReturnType
 
         if (in_array($name, self::NULL_RETURN_TYPES, true)) {
             return new NullType;
+        }
+
+        if (in_array($name, self::STRING_RETURN_TYPES, true)) {
+            return new StringType;
         }
 
         return new ObjectType(self::FUNCTION_RETURN_TYPES[$name]);
