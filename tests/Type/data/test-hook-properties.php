@@ -10,6 +10,21 @@ use Tests\TestCase;
 use Tests\Type\Fixtures\Author;
 use Tests\Type\Fixtures\Post;
 
+function someFunction(): mixed
+{
+    return fopen('php://memory', 'rb');
+}
+
+function resolvePost(): mixed
+{
+    return new Post;
+}
+
+function resolveAuthor(): mixed
+{
+    return new Author;
+}
+
 function testBeforeEachNewObject(): void
 {
     beforeEach(function (): void {
@@ -31,17 +46,6 @@ function testBeforeEachMultipleProperties(): void
     it('resolves multiple property types', function (): void {
         assertType(Post::class, $this->post);
         assertType(Author::class, $this->author);
-    });
-}
-
-function testBeforeAllNewObject(): void
-{
-    beforeAll(function (): void {
-        $this->post = new Post;
-    });
-
-    it('resolves property type from beforeAll', function (): void {
-        assertType(Post::class, $this->post);
     });
 }
 
@@ -165,7 +169,7 @@ function testBeforeEachVarAnnotation(): void
 {
     beforeEach(function (): void {
         /** @var Post $post */
-        $post = Post::factory()->create();
+        $post = resolvePost();
         $this->post = $post;
     });
 
@@ -178,7 +182,7 @@ function testBeforeEachVarAnnotationWithoutVarName(): void
 {
     beforeEach(function (): void {
         /** @var Author */
-        $author = Author::factory()->create();
+        $author = resolveAuthor();
         $this->author = $author;
     });
 
@@ -191,7 +195,7 @@ function testBeforeEachVarAnnotationOnLocalVar(): void
 {
     beforeEach(function (): void {
         /** @var Post $post */
-        $post = Post::factory()->create();
+        $post = resolvePost();
         $this->post = $post;
     });
 

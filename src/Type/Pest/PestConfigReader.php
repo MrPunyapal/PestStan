@@ -228,13 +228,21 @@ final class PestConfigReader
         $directories = [];
 
         foreach ($methodCall->getArgs() as $arg) {
-            if ($arg->value instanceof String_) {
-                $directories[] = $arg->value->value;
-            } elseif ($arg->value instanceof ConstFetch) {
-                $name = $arg->value->name->toString();
-                if ($name === '__DIR__') {
-                    $directories[] = '.';
-                }
+            $value = $arg->value;
+
+            if ($value instanceof String_) {
+                $directories[] = $value->value;
+
+                continue;
+            }
+
+            if (! $value instanceof ConstFetch) {
+                continue;
+            }
+
+            $name = $value->name->toString();
+            if ($name === '__DIR__') {
+                $directories[] = '.';
             }
         }
 
@@ -286,10 +294,16 @@ final class PestConfigReader
         $classNames = [];
 
         foreach ($call->getArgs() as $arg) {
-            if ($arg->value instanceof ClassConstFetch && $arg->value->name instanceof Identifier && $arg->value->name->toString() === 'class' && $arg->value->class instanceof Name) {
-                $classNames[] = $arg->value->class->toString();
-            } elseif ($arg->value instanceof String_) {
-                $classNames[] = $arg->value->value;
+            $value = $arg->value;
+
+            if ($value instanceof ClassConstFetch && $value->name instanceof Identifier && $value->name->toString() === 'class' && $value->class instanceof Name) {
+                $classNames[] = $value->class->toString();
+
+                continue;
+            }
+
+            if ($value instanceof String_) {
+                $classNames[] = $value->value;
             }
         }
 
