@@ -35,6 +35,14 @@ class CoversClassExistsRuleTest extends RuleTestCase
                 'Class App\NonExistent\FakeClass referenced in coversClass() does not exist.',
                 8,
             ],
+            [
+                'Class App\NonExistent\SecondFakeClass referenced in coversClass() does not exist.',
+                18,
+            ],
+            [
+                'Function missing_test_helper() referenced in coversFunction() does not exist.',
+                23,
+            ],
         ]);
     }
 }

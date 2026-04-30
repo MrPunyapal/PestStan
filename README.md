@@ -173,8 +173,14 @@ Accurate return types for all Pest global functions:
 | Function | Return Type |
 |----------|-------------|
 | `expect($value)` | `Expectation<TValue>` |
+| `pest()` | `Configuration` |
+| `uses(...)` | `UsesCall` |
 | `it()` / `test()` / `todo()` | `TestCall` |
 | `describe()` | `DescribeCall` |
+| `beforeEach()` | `BeforeEachCall` |
+| `afterEach()` | `AfterEachCall` |
+| `beforeAll()` / `afterAll()` | `null` |
+| `dataset()` / `covers()` / `mutates()` | `null` |
 
 ### `not()` and `each()` Return Types
 
@@ -195,6 +201,12 @@ it('does something', function () { /* ... */ })
     ->depends('other test')
     ->throws(RuntimeException::class)
     ->repeat(3);
+```
+
+When you set `peststan.testCaseClass` to a custom class, PestStan also exposes that class's public helper methods on `TestCall` chains:
+
+```php
+it('uses a custom helper')->publicHelper();
 ```
 
 ### Architecture Testing Support
@@ -330,34 +342,6 @@ beforeAll(function () {
 ```
 
 Use `beforeEach()` to run setup before each test with `$this` available.
-
-### `pest.todoWithClosure` — `->todo()` with a closure body
-
-`->todo()` marks a test as pending and the closure is **never executed** — any code inside the closure is dead code.
-
-```php
-it('should validate email', function () {
-    expect(validateEmail('test@example.com'))->toBeTrue();
-})->todo();
-// ✘ Test 'should validate email' is marked as todo() but still has a closure body — the code will not execute.
-```
-
-Options:
-- Remove the closure body: `it('should validate email')->todo()` — pure pending placeholder.
-- Use `->skip()` to preserve the code but skip execution.
-- Remove `->todo()` to make the test run.
-
-### `pest.missingAssertion` — Test with no assertions
-
-A test closure that neither calls `expect()` nor any `assert*()` method provides no safety guarantees.
-
-```php
-it('processes the order', function () {
-    $order = Order::create(['total' => 100]);
-    $order->process();
-    // ✘ Test 'processes the order' has no assertions. Did you forget expect()?
-});
-```
 
 ### `pest.throwsClassNotFound` / `pest.invalidThrowsException` — Invalid `throws()` argument
 

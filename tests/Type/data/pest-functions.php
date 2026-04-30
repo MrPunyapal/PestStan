@@ -55,3 +55,18 @@ function testAfterAllReturnType(): void
 {
     assertType('null', afterAll(function (): void {}));
 }
+
+function testDatasetReturnType(): void
+{
+    assertType('null', dataset('numbers', [1, 2, 3]));
+}
+
+function testCoversReturnType(): void
+{
+    assertType('null', covers(TestCase::class));
+}
+
+function testMutatesReturnType(): void
+{
+    assertType('null', mutates(TestCase::class));
+}

@@ -34,11 +34,12 @@ composer test:unit     # Run Pest tests
 ```
 PestStan/
 ├── src/Type/Pest/
-│   ├── PestFunctionReturnTypeExtension.php            # expect/it/test/todo/describe return types
+│   ├── PestFunctionReturnTypeExtension.php            # Pest global helper return types
 │   ├── ExpectationMethodReturnTypeExtension.php       # Type narrowing for assertion methods
 │   ├── OppositeExpectationMethodReturnTypeExtension.php # not() return types
 │   ├── TestClosureThisTypeExtension.php               # $this binding in closures
 │   ├── PestConfigReader.php                           # Pest.php auto-detection for TestCase
+│   ├── TestCallMethodsClassReflectionExtension.php    # TestCall fluent methods from Pest mixins and custom testCaseClass
 │   ├── TestCasePropertiesExtension.php                # Dynamic property support
 │   └── PestTestCaseProperty.php                       # PropertyReflection for dynamic props
 ├── tests/
@@ -50,7 +51,7 @@ PestStan/
 │       ├── ExpectTypeTest.php                         # Main test runner
 │       ├── CustomTestCaseTest.php                     # Custom TestCase test runner
 │       ├── Fixtures/
-│       │   └── CustomTestCase.php                     # Test fixture
+│       │   └── CustomTestCase.php                     # Custom test case fixture for $this and TestCall method coverage
 │       ├── custom-testcase-extension.neon             # PHPStan config for custom TestCase tests
 │       └── data/
 │           ├── expect-function.php                    # expect() return type tests
@@ -58,7 +59,7 @@ PestStan/
 │           ├── test-closures.php                      # $this binding + dynamic property tests
 │           ├── test-closures-custom-testcase.php      # Custom TestCase $this binding tests
 │           ├── test-call-methods.php                  # TestCall chaining tests
-│           ├── pest-functions.php                     # Pest function return type tests
+│           ├── pest-functions.php                     # Pest global helper return type tests
 │           └── arch-expectations.php                  # Architecture testing type tests
 ├── extension.neon                                     # PHPStan extension config
 ├── composer.json
@@ -74,11 +75,15 @@ All type information is provided through PHPStan dynamic type extensions (no stu
 
 ### 1. PestFunctionReturnTypeExtension
 
-`DynamicFunctionReturnTypeExtension` that overrides return types for Pest global functions:
+`DynamicFunctionReturnTypeExtension` that overrides return types for Pest global helpers:
 
 - `expect($value)` → `Expectation<typeof $value>` (removes `|null` from Pest's phpdoc)
+- `pest()` → `Configuration`
+- `uses(...)` → `UsesCall`
 - `it()` / `test()` / `todo()` → `TestCall`
 - `describe()` → `DescribeCall`
+- `beforeEach()` / `afterEach()` → pending call wrappers
+- `beforeAll()` / `afterAll()` / `dataset()` / `covers()` / `mutates()` → `null`
 
 ### 2. ExpectationMethodReturnTypeExtension
 
@@ -108,6 +113,14 @@ Requires `universalObjectCratesClasses` for `PHPUnit\Framework\TestCase` (set au
 ### 6. Configuration (`extension.neon`)
 
 Registers all extensions with PHPStan. Configures `universalObjectCratesClasses` for dynamic property support and `ignoreErrors` for Pest's `@internal` class annotations. Auto-loaded via `phpstan/extension-installer` or manually included.
+
+### 7. TestCallMethodsClassReflectionExtension
+
+`MethodsClassReflectionExtension` that exposes fluent `TestCall` methods coming from Pest mixins and the configured custom `peststan.testCaseClass`.
+
+- Resolves methods from `Pest\Concerns\Testable` and `Pest\Support\HigherOrderCallables`
+- Adds public methods from a custom `testCaseClass` when it differs from `PHPUnit\Framework\TestCase`
+- Skips native `TestCall` methods so custom helpers do not shadow real API methods
 
 ## Testing Approach
 

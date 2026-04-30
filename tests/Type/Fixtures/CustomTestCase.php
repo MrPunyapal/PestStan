@@ -8,6 +8,11 @@ use PHPUnit\Framework\TestCase;
 
 class CustomTestCase extends TestCase
 {
+    public function publicHelper(): string
+    {
+        return 'helper';
+    }
+
     protected function createHelper(): string
     {
         return 'helper';

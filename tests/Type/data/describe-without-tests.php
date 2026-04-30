@@ -45,5 +45,5 @@ describe('test something', function () {
 
 // valid: describe with todo test
 describe('todo test', function (): void {
-    it('todo', function (): void {});
+    todo('todo');
 });

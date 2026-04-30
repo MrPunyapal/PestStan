@@ -77,6 +77,8 @@ services:
 
     -
         class: PestStan\Type\Pest\TestCallMethodsClassReflectionExtension
+        arguments:
+            testCaseClass: %peststan.testCaseClass%
         tags:
             - phpstan.broker.methodsClassReflectionExtension
 

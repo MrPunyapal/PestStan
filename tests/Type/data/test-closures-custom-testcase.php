@@ -49,3 +49,8 @@ function testProtectedMethodCallFromParentOnCustomTestCase(): void
         assertType('string', $this->getActualOutputForAssertion());
     });
 }
+
+function testTestCallMethodOnCustomTestCase(): void
+{
+    assertType('string', it('uses custom test case fluent methods')->publicHelper());
+}

@@ -15,8 +15,20 @@ use PhpParser\Node\Scalar\String_;
  */
 final class PestFunctionDetector
 {
-    /** @var array<string, int> Maps function names to the expected closure argument index */
+    /** @var list<string> */
     private const ALL_FUNCTIONS = [
+        'it',
+        'test',
+        'todo',
+        'describe',
+        'beforeEach',
+        'afterEach',
+        'beforeAll',
+        'afterAll',
+    ];
+
+    /** @var array<string, int> Maps function names to the expected closure argument index */
+    private const CLOSURE_FUNCTIONS = [
         'it' => 1,
         'test' => 1,
         'describe' => 1,
@@ -27,7 +39,7 @@ final class PestFunctionDetector
     ];
 
     /** @var list<string> */
-    private const TEST_FUNCTIONS = ['it', 'test'];
+    private const TEST_FUNCTIONS = ['it', 'test', 'todo'];
 
     /** @var list<string> */
     private const HOOK_FUNCTIONS = ['beforeEach', 'afterEach', 'beforeAll', 'afterAll'];
@@ -40,7 +52,7 @@ final class PestFunctionDetector
 
         $name = $node->name->toString();
 
-        return isset(self::ALL_FUNCTIONS[$name]) ? $name : null;
+        return in_array($name, self::ALL_FUNCTIONS, true) ? $name : null;
     }
 
     public static function isPestFunction(FuncCall $node): bool
@@ -69,7 +81,7 @@ final class PestFunctionDetector
 
     public static function getClosureArgIndex(string $functionName): ?int
     {
-        return self::ALL_FUNCTIONS[$functionName] ?? null;
+        return self::CLOSURE_FUNCTIONS[$functionName] ?? null;
     }
 
     public static function extractClosure(FuncCall $node): Closure|ArrowFunction|null
@@ -79,7 +91,11 @@ final class PestFunctionDetector
             return null;
         }
 
-        $closureArgIndex = self::ALL_FUNCTIONS[$name];
+        $closureArgIndex = self::getClosureArgIndex($name);
+        if ($closureArgIndex === null) {
+            return null;
+        }
+
         $args = $node->getArgs();
 
         if (! isset($args[$closureArgIndex])) {
