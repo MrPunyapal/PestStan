@@ -24,7 +24,12 @@ use PHPStan\Type\VerbosityLevel;
 final class ExpectationValueTypeRule implements Rule
 {
     /** @var list<string> */
-    private const REQUIRES_ITERABLE = ['each', 'sequence'];
+    private const REQUIRES_ITERABLE = [
+        'each',
+        'sequence',
+        'toContainEqual',
+        'toContainOnlyInstancesOf',
+    ];
 
     /** @var list<string> */
     private const REQUIRES_STRING = [
@@ -36,6 +41,7 @@ final class ExpectationValueTypeRule implements Rule
         'toBeLowercase',
         'toBeAlphaNumeric',
         'toBeAlpha',
+        'toBeDigits',
         'toBeSnakeCase',
         'toBeKebabCase',
         'toBeCamelCase',
@@ -43,6 +49,7 @@ final class ExpectationValueTypeRule implements Rule
         'toBeUuid',
         'toBeUrl',
         'toBeSlug',
+        'toMatch',
         'toBeDirectory',
         'toBeFile',
         'toBeReadableFile',

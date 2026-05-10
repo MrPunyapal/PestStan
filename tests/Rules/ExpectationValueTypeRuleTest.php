@@ -132,3 +132,30 @@ test('rector-pest string matchers require string expectation values', function (
         ],
     ]);
 });
+
+test('additional expectation matchers enforce proven value types', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/expectation-additional-value-type.php',
+    ], [
+        [
+            'Calling toContainEqual() on Expectation<int> — value is not iterable.',
+            7,
+            'Pass an iterable value to expect() before calling toContainEqual().',
+        ],
+        [
+            'Calling toContainOnlyInstancesOf() on Expectation<string> — value is not iterable.',
+            11,
+            'Pass an iterable value to expect() before calling toContainOnlyInstancesOf().',
+        ],
+        [
+            'Calling toBeDigits() on Expectation<int> — value must be a string.',
+            16,
+            'Pass a string value to expect() before calling toBeDigits().',
+        ],
+        [
+            'Calling toMatch() on Expectation<int> — value must be a string.',
+            20,
+            'Pass a string value to expect() before calling toMatch().',
+        ],
+    ]);
+});
