@@ -123,6 +123,18 @@ Registers all extensions with PHPStan. Configures `universalObjectCratesClasses`
 - Adds public methods from a custom `testCaseClass` when it differs from `PHPUnit\Framework\TestCase`
 - Skips native `TestCall` methods so custom helpers do not shadow real API methods
 
+## Semantic Architecture
+
+The semantic analysis layer is intentionally narrow and stable.
+
+- `ExpectationSemanticAnalyzer` is the read-only semantic entry point used by rules.
+- `ExpectationChainStateResolver` computes fluent expectation state and broken-chain suppression.
+- `ExpectationTypeNarrower` performs conservative narrowing and overlap checks for propagated expectation values.
+- `ExpectationMatcherRegistry` and the matcher metadata registries expose the semantic matcher contract without coupling the rules to individual method switches.
+- `PestDiagnostic`, `PestDiagnostics`, and `PestDiagnosticIdentifiers` define the diagnostics contract surface that downstream tools can serialize and consume.
+
+This boundary is deliberate: PestStan analyzes and emits stable semantic diagnostics; `rector-pest` can consume those diagnostics for safe remediation, but the analyzer itself does not perform transformations.
+
 ## Testing Approach
 
 Tests use PHPStan's `TypeInferenceTestCase` to verify type assertions. Each test data file uses `assertType()` to declare expected types, and the test runner verifies PHPStan agrees.

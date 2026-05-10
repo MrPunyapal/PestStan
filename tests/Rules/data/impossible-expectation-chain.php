@@ -13,3 +13,16 @@ it('suppresses impossible assertions after an invalid matcher requirement', func
 it('keeps valid chains analyzable', function (): void {
     expect([1, 2])->toBeArray()->toHaveCount(2);
 });
+
+it('keeps multiline fluent chains analyzable', function (): void {
+    expect('{"users":[1,2]}')
+        ->json()
+        ->toBeArray()
+        ->toHaveCount(1);
+});
+
+it('keeps nested expectation chains analyzable', function (): void {
+    expect([[1], [2]])
+        ->toBeArray()
+        ->each(fn (array $row) => expect($row)->toBeArray()->toHaveCount(1));
+});

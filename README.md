@@ -232,7 +232,7 @@ expect('App')->toUseStrictTypes();
 
 PestStan ships with rules that catch common Pest mistakes at static analysis time, before your tests run.
 
-### `pest.emptyTestClosure` — Empty test body
+### `pest.test.emptyClosure` — Empty test body
 
 Detects tests whose closure contains no statements.
 
@@ -242,7 +242,7 @@ it('does something', function () {});
 // ✘ Test 'does something' has an empty closure body. Did you forget to add assertions?
 ```
 
-### `pest.staticTestClosure` — Static test closure
+### `pest.test.staticClosure` — Static test closure
 
 Pest binds `$this` inside every test closure to the `TestCase` instance. Marking the closure `static` prevents that binding.
 
@@ -253,7 +253,7 @@ it('example', static function () {
 });
 ```
 
-### `pest.beforeAllInDescribe` / `pest.afterAllInDescribe` — Lifecycle hooks inside `describe()`
+### `pest.lifecycle.beforeAllDisallowed` / `pest.lifecycle.afterAllDisallowed` — Lifecycle hooks inside `describe()`
 
 Pest does not support `beforeAll()` or `afterAll()` inside `describe()` blocks — calling them throws at runtime.
 
@@ -267,7 +267,7 @@ describe('suite', function () {
 });
 ```
 
-### `pest.repeatInvalidValue` — Invalid `repeat()` count
+### `pest.execution.invalidRepeatValue` — Invalid `repeat()` count
 
 `repeat()` requires a positive integer greater than zero.
 
@@ -276,7 +276,7 @@ it('runs multiple times', function () { /* ... */ })->repeat(0);
 // ✘ repeat() requires a value greater than 0, got 0.
 ```
 
-### `pest.duplicateTestDescription` — Duplicate test description
+### `pest.test.duplicateDescription` — Duplicate test description
 
 Two tests in the same file with the same description will collide at runtime.
 
@@ -400,6 +400,16 @@ parameters:
 /** @phpstan-ignore pest.test.staticClosure */
 it('example', static fn () => expect(true)->toBeTrue());
 ```
+
+Canonical identifiers are emitted in diagnostics and rule errors. Legacy identifiers remain resolvable through [src/Diagnostics/PestDiagnosticIdentifiers.php](src/Diagnostics/PestDiagnosticIdentifiers.php) so downstream tooling can canonicalize older baselines or stored metadata safely.
+
+## Semantic Architecture
+
+PestStan stays on the analysis side of the ecosystem boundary. [src/Analysis/Expectation/ExpectationSemanticAnalyzer.php](src/Analysis/Expectation/ExpectationSemanticAnalyzer.php) owns chain-aware reasoning, [src/Analysis/Expectation/ExpectationChainStateResolver.php](src/Analysis/Expectation/ExpectationChainStateResolver.php) propagates expectation state through fluent chains, and [src/Analysis/Expectation/ExpectationTypeNarrower.php](src/Analysis/Expectation/ExpectationTypeNarrower.php) applies conservative type narrowing without speculative inference.
+
+Diagnostics are the interoperability contract surface. [src/Diagnostics/PestDiagnostic.php](src/Diagnostics/PestDiagnostic.php) is immutable and JSON-safe, [src/Diagnostics/PestDiagnostics.php](src/Diagnostics/PestDiagnostics.php) emits canonical identifiers plus machine-readable metadata, and [src/Diagnostics/PestDiagnosticIdentifiers.php](src/Diagnostics/PestDiagnosticIdentifiers.php) resolves legacy aliases to the canonical taxonomy.
+
+The boundary with `rector-pest` is intentional: PestStan reports stable semantic facts, while Rector consumes those facts to decide whether an automated remediation is safe. PestStan does not apply fixes; it provides deterministic identifiers, semantic codes, matcher categories, and type reasoning that other tools can consume.
 
 ## Testing
 

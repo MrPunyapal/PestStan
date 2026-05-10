@@ -9,3 +9,12 @@ it('suppresses redundant assertions after invalid matcher requirements', functio
 it('still reports redundant assertions before valid follow-up matchers', function (): void {
     expect('abc')->toBeString()->toStartWith('a'); // line 10
 });
+
+it('keeps multiline narrowed chains deterministic', function (): void {
+    /** @var int|string $value */
+    $value = 'abc';
+
+    expect($value)
+        ->toBeString()
+        ->toStartWith('a');
+});

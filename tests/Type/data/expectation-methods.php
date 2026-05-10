@@ -334,6 +334,29 @@ function testToBeIterableNarrowsIterableObjects(): void
     assertType('ArrayIterator<int, int>', $result->value);
 }
 
+function testMultilineJsonChainPropagation(): void
+{
+    $result = expect('{"users":[1,2]}')
+        ->json()
+        ->toBeArray()
+        ->toHaveCount(1);
+
+    assertType('Pest\Expectation<array<int|string, mixed>>', $result);
+}
+
+function testChainedSemanticAssertionsStayDeterministic(): void
+{
+    /** @var ArrayIterator<int, int>|string $value */
+    $value = new ArrayIterator([1, 2, 3]);
+
+    $result = expect($value)
+        ->toBeIterable()
+        ->toBeInstanceOf(ArrayIterator::class)
+        ->toHaveCount(3);
+
+    assertType('Pest\Expectation<ArrayIterator<int, int>>', $result);
+}
+
 function testChainedNot(): void
 {
     $result = expect(1)->not->toBe(2)->not->toBe(3);
