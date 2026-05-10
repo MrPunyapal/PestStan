@@ -286,53 +286,53 @@ it('does something', fn () => expect(2)->toBe(2));
 // ✘ A test with the description 'it does something' already exists in this file.
 ```
 
-### `pest.impossibleExpectation` — Assertion that always fails
+### `pest.expectation.impossible` — Assertion that always fails
 
 When the static type already makes an assertion impossible, PestStan reports it.
 
 ```php
 expect(42)->toBeString();
-// ✘ Calling toBeString() on Expectation<int> will always fail.
+// ✘ Calling toBeString() on Expectation<int>; assertion is impossible.
 
 expect('hello')->toBeNull();
-// ✘ Calling toBeNull() on Expectation<string> will always fail.
+// ✘ Calling toBeNull() on Expectation<string>; assertion is impossible.
 ```
 
 Covered assertions: `toBeString`, `toBeInt`, `toBeFloat`, `toBeBool`, `toBeTrue`, `toBeFalse`, `toBeNull`, `toBeArray`, `toBeList`, `toBeObject`, `toBeCallable`, `toBeIterable`, `toBeNumeric`, `toBeScalar`, `toBeInstanceOf`.
 
-### `pest.redundantExpectation` — Assertion that always passes
+### `pest.expectation.redundant` — Assertion that always passes
 
 When the static type already guarantees an assertion will always succeed, the assertion is redundant and adds no value.
 
 ```php
 expect(true)->toBeTrue();
-// ✘ Calling toBeTrue() on Expectation<true> will always pass — the assertion is redundant.
+// ✘ Calling toBeTrue() on Expectation<true>; assertion is redundant.
 
 expect('hello')->toBeString();
-// ✘ Calling toBeString() on Expectation<string> will always pass — the assertion is redundant.
+// ✘ Calling toBeString() on Expectation<string>; assertion is redundant.
 
 expect(42)->toBeNumeric();
-// ✘ Calling toBeNumeric() on Expectation<int> will always pass — the assertion is redundant.
+// ✘ Calling toBeNumeric() on Expectation<int>; assertion is redundant.
 ```
 
 Covered assertions: `toBeString`, `toBeInt`, `toBeFloat`, `toBeBool`, `toBeTrue`, `toBeFalse`, `toBeNull`, `toBeArray`, `toBeList`, `toBeObject`, `toBeCallable`, `toBeIterable`, `toBeNumeric`, `toBeScalar`, `toBeInstanceOf`.
 
-### `pest.expectationRequiresIterable` / `pest.expectationRequiresString` — Incompatible value type
+### `pest.expectation.requiresIterable` / `pest.expectation.requiresString` — Incompatible value type
 
 Some expectation methods require the value to satisfy a pre-condition.
 
 ```php
 expect(42)->each(fn ($e) => $e->toBeInt());
-// ✘ Calling each() on Expectation<int> — value is not iterable.
+// ✘ Calling each() on Expectation<int>; matcher requires iterable.
 
 expect(42)->toBeJson();
-// ✘ Calling toBeJson() on Expectation<int> — value must be a string.
+// ✘ Calling toBeJson() on Expectation<int>; matcher requires string.
 ```
 
 Methods requiring an iterable: `each`, `sequence`.  
 Methods requiring a string: `json`, `toStartWith`, `toEndWith`, `toBeJson`, `toBeDirectory`, `toBeFile`, `toBeReadableFile`, `toBeWritableFile`, `toBeReadableDirectory`, `toBeWritableDirectory`.
 
-### `pest.beforeAllThisUsage` — `$this` inside `beforeAll()`
+### `pest.lifecycle.beforeAllThisUsage` — `$this` inside `beforeAll()`
 
 `beforeAll()` runs once in a static context before any tests in the file. `$this` is not available.
 

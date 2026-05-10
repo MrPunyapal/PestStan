@@ -112,3 +112,25 @@ test('impossible chains only report the first broken step', function (): void {
         ],
     ]);
 });
+
+test('instanceof and numeric impossibilities are reported conservatively', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/impossible-expectation-instanceof.php',
+    ], [
+        [
+            'Calling toBeInstanceOf() on Expectation<stdClass>; assertion is impossible.',
+            12,
+            'The expectation value is stdClass, which can never satisfy toBeInstanceOf().',
+        ],
+        [
+            'Calling toBeInstanceOf() on Expectation<RuntimeException>; assertion is impossible.',
+            16,
+            'The expectation value is RuntimeException, which can never satisfy toBeInstanceOf().',
+        ],
+        [
+            'Calling toBeNumeric() on Expectation<bool>; assertion is impossible.',
+            23,
+            'The expectation value is bool, which can never satisfy toBeNumeric().',
+        ],
+    ]);
+});

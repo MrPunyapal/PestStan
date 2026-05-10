@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PestStan\Diagnostics\PestDiagnostics;
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
@@ -30,11 +31,11 @@ final class BeforeAllThisUsageRule implements Rule
     /** @var array<string, array{identifier: string, replacement: string}> */
     private const STATIC_HOOKS = [
         'beforeAll' => [
-            'identifier' => 'pest.beforeAllThisUsage',
+            'identifier' => PestDiagnosticIdentifiers::LIFECYCLE_BEFORE_ALL_THIS_USAGE,
             'replacement' => 'beforeEach',
         ],
         'afterAll' => [
-            'identifier' => 'pest.afterAllThisUsage',
+            'identifier' => PestDiagnosticIdentifiers::LIFECYCLE_AFTER_ALL_THIS_USAGE,
             'replacement' => 'afterEach',
         ],
     ];

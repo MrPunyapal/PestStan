@@ -87,3 +87,30 @@ test('redundant chains ignore earlier invalid matcher steps', function (): void 
         ],
     ]);
 });
+
+test('inheritance and scalar redundancies are reported', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/redundant-expectation-instanceof.php',
+    ], [
+        [
+            'Calling toBeInstanceOf() on Expectation<RuntimeException>; assertion is redundant.',
+            6,
+            'The expectation value is already guaranteed to satisfy toBeInstanceOf().',
+        ],
+        [
+            'Calling toBeInstanceOf() on Expectation<RuntimeException>; assertion is redundant.',
+            10,
+            'The expectation value is already guaranteed to satisfy toBeInstanceOf().',
+        ],
+        [
+            'Calling toBeScalar() on Expectation<int|string>; assertion is redundant.',
+            17,
+            'The expectation value is already guaranteed to satisfy toBeScalar().',
+        ],
+        [
+            'Calling toBeNumeric() on Expectation<string>; assertion is redundant.',
+            24,
+            'The expectation value is already guaranteed to satisfy toBeNumeric().',
+        ],
+    ]);
+});
