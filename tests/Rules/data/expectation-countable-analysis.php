@@ -48,3 +48,25 @@ it('each on array', function (): void {
 it('sequence on array', function (): void {
     expect([1, 2])->sequence(fn ($item) => $item->toBeInt());
 });
+
+it('propagates array state into each', function (): void {
+    /** @var array<string, int>|string $value */
+    $value = ['a' => 1];
+
+    expect($value)->toBeArray()->each();
+});
+
+it('propagates instance-of state into countable matchers', function (): void {
+    /** @var ArrayIterator<int, int>|stdClass $value */
+    $value = new ArrayIterator([1]);
+
+    expect($value)->toBeInstanceOf(ArrayIterator::class)->toHaveCount(1);
+});
+
+it('propagates fluent value changes into iterable matchers', function (): void {
+    expect('seed')->and([1, 2])->each();
+});
+
+it('propagates json chains into countable matchers', function (): void {
+    expect('{"a":1,"b":2}')->json()->toHaveCount(2);
+});

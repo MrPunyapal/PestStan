@@ -4,120 +4,115 @@ declare(strict_types=1);
 
 namespace PestStan\Analysis\Expectation;
 
+use PhpParser\Node\Expr\MethodCall;
+use PHPStan\Analyser\Scope;
+use PHPStan\Type\Type;
+
 final class ExpectationMatcherRegistry
 {
-    public const REQUIREMENT_STRING = 'string';
+    public const REQUIREMENT_STRING = MatcherRequirementRegistry::STRING;
 
-    public const REQUIREMENT_ITERABLE = 'iterable';
+    public const REQUIREMENT_ITERABLE = MatcherRequirementRegistry::ITERABLE;
 
-    public const REQUIREMENT_COUNTABLE_OR_ITERABLE = 'countable_or_iterable';
+    public const REQUIREMENT_COUNTABLE_OR_ITERABLE = MatcherRequirementRegistry::COUNTABLE_OR_ITERABLE;
 
-    public const TYPE_STRING = 'string';
+    public const TYPE_STRING = MatcherAssertionRegistry::STRING;
 
-    public const TYPE_INT = 'int';
+    public const TYPE_INT = MatcherAssertionRegistry::INT;
 
-    public const TYPE_FLOAT = 'float';
+    public const TYPE_FLOAT = MatcherAssertionRegistry::FLOAT;
 
-    public const TYPE_BOOL = 'bool';
+    public const TYPE_BOOL = MatcherAssertionRegistry::BOOL;
 
-    public const TYPE_TRUE = 'true';
+    public const TYPE_TRUE = MatcherAssertionRegistry::TRUE;
 
-    public const TYPE_FALSE = 'false';
+    public const TYPE_FALSE = MatcherAssertionRegistry::FALSE;
 
-    public const TYPE_NULL = 'null';
+    public const TYPE_NULL = MatcherAssertionRegistry::NULL;
 
-    public const TYPE_ARRAY = 'array';
+    public const TYPE_ARRAY = MatcherAssertionRegistry::ARRAY;
 
-    public const TYPE_LIST = 'list';
+    public const TYPE_LIST = MatcherAssertionRegistry::LIST;
 
-    public const TYPE_OBJECT = 'object';
+    public const TYPE_OBJECT = MatcherAssertionRegistry::OBJECT;
 
-    public const TYPE_CALLABLE = 'callable';
+    public const TYPE_CALLABLE = MatcherAssertionRegistry::CALLABLE;
 
-    public const TYPE_ITERABLE = 'iterable';
+    public const TYPE_ITERABLE = MatcherAssertionRegistry::ITERABLE;
 
-    public const TYPE_NUMERIC = 'numeric';
+    public const TYPE_NUMERIC = MatcherAssertionRegistry::NUMERIC;
 
-    public const TYPE_SCALAR = 'scalar';
+    public const TYPE_SCALAR = MatcherAssertionRegistry::SCALAR;
 
-    public const TYPE_INSTANCE_OF = 'instance_of';
+    public const TYPE_INSTANCE_OF = MatcherAssertionRegistry::INSTANCE_OF;
 
-    /** @var array<string, list<string>> */
-    private const VALUE_REQUIREMENTS = [
-        self::REQUIREMENT_STRING => [
-            'json',
-            'toStartWith',
-            'toEndWith',
-            'toBeJson',
-            'toBeUppercase',
-            'toBeLowercase',
-            'toBeAlphaNumeric',
-            'toBeAlpha',
-            'toBeDigits',
-            'toBeSnakeCase',
-            'toBeKebabCase',
-            'toBeCamelCase',
-            'toBeStudlyCase',
-            'toBeUuid',
-            'toBeUrl',
-            'toBeSlug',
-            'toMatch',
-            'toBeDirectory',
-            'toBeFile',
-            'toBeReadableFile',
-            'toBeWritableFile',
-            'toBeReadableDirectory',
-            'toBeWritableDirectory',
-        ],
-        self::REQUIREMENT_ITERABLE => [
-            'each',
-            'sequence',
-            'toContainEqual',
-            'toContainOnlyInstancesOf',
-        ],
-        self::REQUIREMENT_COUNTABLE_OR_ITERABLE => [
-            'toHaveCount',
-            'toHaveSameSize',
-        ],
-    ];
+    private readonly MatcherRequirementRegistry $requirementRegistry;
 
-    /** @var array<string, string> */
-    private const TYPE_ASSERTIONS = [
-        'toBeString' => self::TYPE_STRING,
-        'toBeInt' => self::TYPE_INT,
-        'toBeFloat' => self::TYPE_FLOAT,
-        'toBeBool' => self::TYPE_BOOL,
-        'toBeTrue' => self::TYPE_TRUE,
-        'toBeFalse' => self::TYPE_FALSE,
-        'toBeNull' => self::TYPE_NULL,
-        'toBeArray' => self::TYPE_ARRAY,
-        'toBeList' => self::TYPE_LIST,
-        'toBeObject' => self::TYPE_OBJECT,
-        'toBeCallable' => self::TYPE_CALLABLE,
-        'toBeIterable' => self::TYPE_ITERABLE,
-        'toBeNumeric' => self::TYPE_NUMERIC,
-        'toBeScalar' => self::TYPE_SCALAR,
-        'toBeInstanceOf' => self::TYPE_INSTANCE_OF,
-    ];
+    private readonly MatcherAssertionRegistry $assertionRegistry;
+
+    private readonly MatcherCategoryRegistry $categoryRegistry;
+
+    /** @var array<string, MatcherSemanticMetadata|null> */
+    private array $metadataCache = [];
+
+    public function __construct(
+        ?MatcherRequirementRegistry $requirementRegistry = null,
+        ?MatcherAssertionRegistry $assertionRegistry = null,
+        ?MatcherCategoryRegistry $categoryRegistry = null,
+    ) {
+        $this->requirementRegistry = $requirementRegistry ?? new MatcherRequirementRegistry;
+        $this->assertionRegistry = $assertionRegistry ?? new MatcherAssertionRegistry;
+        $this->categoryRegistry = $categoryRegistry ?? new MatcherCategoryRegistry;
+    }
 
     public function requirementFor(string $methodName): ?string
     {
-        foreach (self::VALUE_REQUIREMENTS as $requirement => $methods) {
-            if (in_array($methodName, $methods, true)) {
-                return $requirement;
-            }
-        }
-
-        return null;
+        return $this->metadataFor($methodName)?->requirement;
     }
 
     public function impossibleOnType(string $methodName): ?string
     {
-        return self::TYPE_ASSERTIONS[$methodName] ?? null;
+        return $this->metadataFor($methodName)?->assertion;
     }
 
     public function redundantOnType(string $methodName): ?string
     {
-        return self::TYPE_ASSERTIONS[$methodName] ?? null;
+        return $this->metadataFor($methodName)?->assertion;
+    }
+
+    public function assertionFor(string $methodName): ?string
+    {
+        return $this->metadataFor($methodName)?->assertion;
+    }
+
+    public function assertedTypeFor(string $methodName, MethodCall $methodCall, Scope $scope): ?Type
+    {
+        return $this->assertionRegistry->assertedTypeFor($methodName, $methodCall, $scope);
+    }
+
+    public function metadataFor(string $methodName): ?MatcherSemanticMetadata
+    {
+        if (array_key_exists($methodName, $this->metadataCache)) {
+            return $this->metadataCache[$methodName];
+        }
+
+        $requirement = $this->requirementRegistry->requirementFor($methodName);
+        $assertion = $this->assertionRegistry->assertionFor($methodName);
+        $categories = $this->categoryRegistry->categoriesFor($methodName);
+
+        if ($requirement === null && $assertion === null && $categories === []) {
+            $this->metadataCache[$methodName] = null;
+
+            return null;
+        }
+
+        $this->metadataCache[$methodName] = new MatcherSemanticMetadata(
+            $methodName,
+            $requirement,
+            $assertion,
+            $categories,
+        );
+
+        return $this->metadataCache[$methodName];
     }
 }

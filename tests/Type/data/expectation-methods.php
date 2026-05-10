@@ -125,7 +125,7 @@ function testToBeArrayNarrows(): void
     /** @var array<string, int>|string $value */
     $value = ['a' => 1];
     $result = expect($value)->toBeArray();
-    assertType('Pest\Expectation<array<int|string, mixed>>', $result);
+    assertType('Pest\Expectation<array<string, int>>', $result);
 }
 
 function testToBeNullNarrows(): void
@@ -245,6 +245,41 @@ function testToBeListNarrows(): void
     $value = [1, 2, 3];
     $result = expect($value)->toBeList();
     assertType('Pest\Expectation<list>', $result);
+}
+
+interface NamedEntity {}
+
+class Person implements NamedEntity {}
+
+class Employee extends Person {}
+
+function testStatePropagationAcrossMatchers(): void
+{
+    /** @var array<string, int>|string $value */
+    $value = ['a' => 1];
+
+    assertType('Pest\Expectations\EachExpectation<array<string, int>>', expect($value)->toBeArray()->each());
+    assertType('Pest\Expectation<array<string, int>>', expect($value)->toBeArray()->toHaveCount(1));
+}
+
+function testToBeNumericPreservesNumericStrings(): void
+{
+    /** @var numeric-string|bool $value */
+    $value = '42';
+
+    $result = expect($value)->toBeNumeric();
+
+    assertType('Pest\Expectation<numeric-string>', $result);
+}
+
+function testToBeScalarNarrowsScalarUnions(): void
+{
+    /** @var int|string|array<int> $value */
+    $value = 42;
+
+    $result = expect($value)->toBeScalar();
+
+    assertType('Pest\Expectation<int|string>', $result);
 }
 
 function testChainedNot(): void
