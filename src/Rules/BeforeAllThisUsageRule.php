@@ -21,12 +21,24 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
- * Detects $this usage inside beforeAll() closures, which run in static context.
+ * Detects $this usage inside static Pest hook closures.
  *
  * @implements Rule<FuncCall>
  */
 final class BeforeAllThisUsageRule implements Rule
 {
+    /** @var array<string, array{identifier: string, replacement: string}> */
+    private const STATIC_HOOKS = [
+        'beforeAll' => [
+            'identifier' => 'pest.beforeAllThisUsage',
+            'replacement' => 'beforeEach',
+        ],
+        'afterAll' => [
+            'identifier' => 'pest.afterAllThisUsage',
+            'replacement' => 'afterEach',
+        ],
+    ];
+
     public function getNodeType(): string
     {
         return FuncCall::class;
@@ -37,7 +49,12 @@ final class BeforeAllThisUsageRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (! $node->name instanceof Name || $node->name->toString() !== 'beforeAll') {
+        if (! $node->name instanceof Name) {
+            return [];
+        }
+
+        $functionName = $node->name->toString();
+        if (! isset(self::STATIC_HOOKS[$functionName])) {
             return [];
         }
 
@@ -46,13 +63,13 @@ final class BeforeAllThisUsageRule implements Rule
             return [];
         }
 
-        return $this->findThisUsages($closure);
+        return $this->findThisUsages($closure, $functionName);
     }
 
     /**
      * @return list<IdentifierRuleError>
      */
-    private function findThisUsages(Closure $closure): array
+    private function findThisUsages(Closure $closure, string $functionName): array
     {
         $errors = [];
 
@@ -61,7 +78,7 @@ final class BeforeAllThisUsageRule implements Rule
                 continue;
             }
 
-            $this->walkExprForThis($stmt->expr, $errors);
+            $this->walkExprForThis($stmt->expr, $errors, $functionName);
         }
 
         return $errors;
@@ -70,33 +87,39 @@ final class BeforeAllThisUsageRule implements Rule
     /**
      * @param  list<IdentifierRuleError>  $errors
      */
-    private function walkExprForThis(Expr $expr, array &$errors): void
+    private function walkExprForThis(Expr $expr, array &$errors, string $functionName): void
     {
         if ($expr instanceof PropertyFetch && $expr->var instanceof Variable && $expr->var->name === 'this') {
-            $errors[] = RuleErrorBuilder::message(
-                'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.'
-            )
-                ->identifier('pest.beforeAllThisUsage')
-                ->line($expr->getStartLine())
-                ->build();
+            $errors[] = $this->buildStaticHookError($functionName, $expr->getStartLine());
 
             return;
         }
 
         if ($expr instanceof MethodCall && $expr->var instanceof Variable && $expr->var->name === 'this') {
-            $errors[] = RuleErrorBuilder::message(
-                'beforeAll() runs in static context — $this is not available. Use beforeEach() instead.'
-            )
-                ->identifier('pest.beforeAllThisUsage')
-                ->line($expr->getStartLine())
-                ->build();
+            $errors[] = $this->buildStaticHookError($functionName, $expr->getStartLine());
 
             return;
         }
 
         if ($expr instanceof Assign) {
-            $this->walkExprForThis($expr->var, $errors);
-            $this->walkExprForThis($expr->expr, $errors);
+            $this->walkExprForThis($expr->var, $errors, $functionName);
+            $this->walkExprForThis($expr->expr, $errors, $functionName);
         }
+    }
+
+    private function buildStaticHookError(string $functionName, int $line): IdentifierRuleError
+    {
+        $hookConfig = self::STATIC_HOOKS[$functionName];
+
+        return RuleErrorBuilder::message(
+            sprintf(
+                '%s() runs in static context — $this is not available. Use %s() instead.',
+                $functionName,
+                $hookConfig['replacement']
+            )
+        )
+            ->identifier($hookConfig['identifier'])
+            ->line($line)
+            ->build();
     }
 }
