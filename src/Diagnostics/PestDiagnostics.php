@@ -121,7 +121,7 @@ final class PestDiagnostics
     public static function toRuleError(PestDiagnostic $diagnostic): IdentifierRuleError
     {
         $builder = RuleErrorBuilder::message($diagnostic->message)
-            ->identifier($diagnostic->identifier);
+            ->identifier(PestDiagnosticIdentifiers::canonicalize($diagnostic->identifier));
 
         if ($diagnostic->tip !== null) {
             $builder->tip($diagnostic->tip);
@@ -166,9 +166,11 @@ final class PestDiagnostics
 
     private static function semanticCodeForLifecycleIdentifier(string $identifier): string
     {
-        return match ($identifier) {
+        return match (PestDiagnosticIdentifiers::canonicalize($identifier)) {
             PestDiagnosticIdentifiers::LIFECYCLE_BEFORE_ALL_THIS_USAGE => 'lifecycle.before_all_this_usage',
             PestDiagnosticIdentifiers::LIFECYCLE_AFTER_ALL_THIS_USAGE => 'lifecycle.after_all_this_usage',
+            PestDiagnosticIdentifiers::DESCRIBE_BEFORE_ALL_DISALLOWED => 'lifecycle.before_all_disallowed',
+            PestDiagnosticIdentifiers::DESCRIBE_AFTER_ALL_DISALLOWED => 'lifecycle.after_all_disallowed',
             default => 'lifecycle.static_this_usage',
         };
     }

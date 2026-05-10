@@ -7,10 +7,11 @@ namespace Tests\Semantics;
 use PestStan\Analysis\Expectation\ExpectationMatcherRegistry;
 use PestStan\Analysis\Expectation\MatcherCategoryRegistry;
 use PestStan\Analysis\Expectation\MatcherRequirementRegistry;
+use PestStan\Diagnostics\PestDiagnostic;
 use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PestStan\Diagnostics\PestDiagnostics;
+use JsonException;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 final class PestDiagnosticsTest extends TestCase
 {
@@ -90,12 +91,90 @@ final class PestDiagnosticsTest extends TestCase
 
     public function test_identifier_constants_are_unique_and_canonical(): void
     {
-        $identifiers = array_values((new ReflectionClass(PestDiagnosticIdentifiers::class))->getConstants());
+        $identifiers = PestDiagnosticIdentifiers::all();
 
         self::assertCount(count(array_unique($identifiers)), $identifiers);
 
         foreach ($identifiers as $identifier) {
+            self::assertTrue(PestDiagnosticIdentifiers::isCanonical($identifier));
             self::assertMatchesRegularExpression('/^pest(?:\.[a-z][A-Za-z0-9]*)+$/', $identifier);
         }
+    }
+
+    public function test_legacy_aliases_resolve_to_canonical_identifiers(): void
+    {
+        self::assertSame(
+            PestDiagnosticIdentifiers::REPEAT_INVALID_VALUE,
+            PestDiagnosticIdentifiers::canonicalize('pest.repeatInvalidValue'),
+        );
+        self::assertSame(
+            PestDiagnosticIdentifiers::REPEAT_INVALID_VALUE,
+            PestDiagnosticIdentifiers::canonicalize('pest.repeat.invalidValue'),
+        );
+        self::assertSame(
+            PestDiagnosticIdentifiers::DESCRIBE_BEFORE_ALL_DISALLOWED,
+            PestDiagnosticIdentifiers::canonicalize('pest.beforeAllInDescribe'),
+        );
+        self::assertContains(
+            'pest.describe.beforeAllDisallowed',
+            PestDiagnosticIdentifiers::aliasesFor(PestDiagnosticIdentifiers::DESCRIBE_BEFORE_ALL_DISALLOWED),
+        );
+        self::assertContains(
+            'pest.repeatInvalidValue',
+            PestDiagnosticIdentifiers::aliasesFor(PestDiagnosticIdentifiers::REPEAT_INVALID_VALUE),
+        );
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public function test_diagnostic_serialization_is_stable_and_json_safe(): void
+    {
+        $diagnostic = PestDiagnostics::invalidMatcherType('toBeAlpha', 'int', MatcherRequirementRegistry::STRING);
+
+        self::assertSame([
+            'kind' => 'invalid_matcher_type',
+            'identifier' => PestDiagnosticIdentifiers::EXPECTATION_REQUIRES_STRING,
+            'severity' => 'error',
+            'fixable' => false,
+            'message' => 'Calling toBeAlpha() on Expectation<int>; matcher requires string.',
+            'tip' => 'Pass a string value to expect() before calling toBeAlpha().',
+            'line' => null,
+            'semanticCategory' => MatcherCategoryRegistry::STRING,
+            'confidenceLevel' => 'high',
+            'fixStrategy' => 'adjust_input_type',
+            'fixRule' => 'pest.expectation.adjustInputType',
+            'semanticCode' => 'expectation.requires_string',
+            'matcherCategory' => MatcherCategoryRegistry::STRING,
+            'suggestedFix' => 'Pass a string to expect() before calling toBeAlpha().',
+            'relatedMatcher' => 'toBeAlpha',
+            'expectedType' => 'string',
+            'actualType' => 'int',
+            'matcher' => 'toBeAlpha',
+            'valueType' => 'int',
+            'requirement' => MatcherRequirementRegistry::STRING,
+            'lifecycleHook' => null,
+        ], $diagnostic->toArray());
+
+        self::assertSame(
+            json_encode($diagnostic->toArray(), JSON_THROW_ON_ERROR),
+            json_encode($diagnostic, JSON_THROW_ON_ERROR),
+        );
+    }
+
+    public function test_diagnostic_serialization_canonicalizes_alias_identifiers(): void
+    {
+        $diagnostic = new PestDiagnostic(
+            kind: 'invalid_lifecycle_usage',
+            identifier: 'pest.beforeAllInDescribe',
+            severity: 'error',
+            fixable: true,
+            message: 'beforeAll() cannot be used inside describe() blocks.',
+        );
+
+        self::assertSame(
+            PestDiagnosticIdentifiers::DESCRIBE_BEFORE_ALL_DISALLOWED,
+            $diagnostic->toArray()['identifier'],
+        );
     }
 }

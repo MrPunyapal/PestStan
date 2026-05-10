@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PestStan\Diagnostics;
 
-final readonly class PestDiagnostic
+use JsonSerializable;
+
+final readonly class PestDiagnostic implements JsonSerializable
 {
     public function __construct(
         public string $kind,
@@ -29,4 +31,42 @@ final readonly class PestDiagnostic
         public ?string $requirement = null,
         public ?string $lifecycleHook = null,
     ) {}
+
+    /**
+     * @return array<string, bool|int|string|null>
+     */
+    public function toArray(): array
+    {
+        return [
+            'kind' => $this->kind,
+            'identifier' => PestDiagnosticIdentifiers::canonicalize($this->identifier),
+            'severity' => $this->severity,
+            'fixable' => $this->fixable,
+            'message' => $this->message,
+            'tip' => $this->tip,
+            'line' => $this->line,
+            'semanticCategory' => $this->semanticCategory,
+            'confidenceLevel' => $this->confidenceLevel,
+            'fixStrategy' => $this->fixStrategy,
+            'fixRule' => $this->fixRule,
+            'semanticCode' => $this->semanticCode,
+            'matcherCategory' => $this->matcherCategory,
+            'suggestedFix' => $this->suggestedFix,
+            'relatedMatcher' => $this->relatedMatcher,
+            'expectedType' => $this->expectedType,
+            'actualType' => $this->actualType,
+            'matcher' => $this->matcher,
+            'valueType' => $this->valueType,
+            'requirement' => $this->requirement,
+            'lifecycleHook' => $this->lifecycleHook,
+        ];
+    }
+
+    /**
+     * @return array<string, bool|int|string|null>
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
 }
