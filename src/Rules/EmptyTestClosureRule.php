@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
@@ -55,7 +56,7 @@ final class EmptyTestClosureRule implements Rule
             RuleErrorBuilder::message(
                 sprintf("Test '%s' has an empty closure body. Add assertions or chain ->todo() to mark as pending.", $description)
             )
-                ->identifier('pest.emptyTestClosure')
+                ->identifier(PestDiagnosticIdentifiers::TEST_EMPTY_CLOSURE)
                 ->build(),
         ];
     }

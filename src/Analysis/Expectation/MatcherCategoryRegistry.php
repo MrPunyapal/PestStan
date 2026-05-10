@@ -6,6 +6,10 @@ namespace PestStan\Analysis\Expectation;
 
 final class MatcherCategoryRegistry
 {
+    public const TYPE_ASSERTION = 'type_assertion';
+
+    public const COLLECTION = 'collection_matcher';
+
     public const STRING = 'string_matcher';
 
     public const ITERABLE = 'iterable_matcher';
@@ -43,28 +47,38 @@ final class MatcherCategoryRegistry
         'toBeWritableFile' => [self::FILESYSTEM],
         'toBeReadableDirectory' => [self::FILESYSTEM],
         'toBeWritableDirectory' => [self::FILESYSTEM],
-        'each' => [self::ITERABLE],
-        'sequence' => [self::ITERABLE],
-        'toContainEqual' => [self::ITERABLE],
-        'toContainOnlyInstancesOf' => [self::ITERABLE],
-        'toHaveCount' => [self::ITERABLE],
-        'toHaveSameSize' => [self::ITERABLE],
-        'toBeString' => [self::STRING, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeInt' => [self::NUMERIC, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeFloat' => [self::NUMERIC, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeBool' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeTrue' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeFalse' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeNull' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeArray' => [self::ITERABLE, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeList' => [self::ITERABLE, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeObject' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeCallable' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeIterable' => [self::ITERABLE, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeNumeric' => [self::NUMERIC, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeScalar' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeInstanceOf' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
-        'toBeResource' => [self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'each' => [self::COLLECTION, self::ITERABLE],
+        'sequence' => [self::COLLECTION, self::ITERABLE],
+        'toContainEqual' => [self::COLLECTION, self::ITERABLE],
+        'toContainOnlyInstancesOf' => [self::COLLECTION, self::ITERABLE],
+        'toHaveCount' => [self::COLLECTION, self::ITERABLE],
+        'toHaveSameSize' => [self::COLLECTION, self::ITERABLE],
+        'toBeString' => [self::TYPE_ASSERTION, self::STRING, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeInt' => [self::TYPE_ASSERTION, self::NUMERIC, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeFloat' => [self::TYPE_ASSERTION, self::NUMERIC, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeBool' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeTrue' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeFalse' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeNull' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeArray' => [self::TYPE_ASSERTION, self::COLLECTION, self::ITERABLE, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeList' => [self::TYPE_ASSERTION, self::COLLECTION, self::ITERABLE, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeObject' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeCallable' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeIterable' => [self::TYPE_ASSERTION, self::COLLECTION, self::ITERABLE, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeNumeric' => [self::TYPE_ASSERTION, self::NUMERIC, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeScalar' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeInstanceOf' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+        'toBeResource' => [self::TYPE_ASSERTION, self::SEMANTIC_ASSERTION, self::STATE_ASSERTION],
+    ];
+
+    /** @var list<string> */
+    private const PRIMARY_CATEGORY_ORDER = [
+        self::TYPE_ASSERTION,
+        self::COLLECTION,
+        self::STRING,
+        self::NUMERIC,
+        self::ITERABLE,
+        self::FILESYSTEM,
     ];
 
     /**
@@ -73,5 +87,18 @@ final class MatcherCategoryRegistry
     public function categoriesFor(string $methodName): array
     {
         return self::METHOD_CATEGORIES[$methodName] ?? [];
+    }
+
+    public function primaryCategoryFor(string $methodName): ?string
+    {
+        $categories = $this->categoriesFor($methodName);
+
+        foreach (self::PRIMARY_CATEGORY_ORDER as $category) {
+            if (in_array($category, $categories, true)) {
+                return $category;
+            }
+        }
+
+        return $categories[0] ?? null;
     }
 }

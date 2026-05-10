@@ -115,4 +115,9 @@ final class ExpectationMatcherRegistry
 
         return $this->metadataCache[$methodName];
     }
+
+    public function primaryCategoryFor(string $methodName): ?string
+    {
+        return $this->categoryRegistry->primaryCategoryFor($methodName);
+    }
 }

@@ -7,6 +7,7 @@ namespace PestStan\Rules;
 use Pest\Configuration;
 use Pest\PendingCalls\TestCall;
 use Pest\PendingCalls\UsesCall;
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
@@ -48,7 +49,7 @@ final class InvalidGroupNameRule implements Rule
         if ($args === []) {
             return [
                 RuleErrorBuilder::message('group() requires at least one non-empty string argument.')
-                    ->identifier('pest.invalidGroupName')
+                    ->identifier(PestDiagnosticIdentifiers::GROUP_INVALID_NAME)
                     ->build(),
             ];
         }
@@ -57,7 +58,7 @@ final class InvalidGroupNameRule implements Rule
             if ($arg->value instanceof String_ && trim($arg->value->value) === '') {
                 return [
                     RuleErrorBuilder::message('group() requires a non-empty string argument.')
-                        ->identifier('pest.invalidGroupName')
+                        ->identifier(PestDiagnosticIdentifiers::GROUP_INVALID_NAME)
                         ->build(),
                 ];
             }

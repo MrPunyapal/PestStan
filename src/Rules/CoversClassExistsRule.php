@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PestStan\Rules;
 
 use Pest\PendingCalls\TestCall;
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ClassConstFetch;
@@ -80,7 +81,7 @@ final class CoversClassExistsRule implements Rule
                     $errors[] = RuleErrorBuilder::message(
                         sprintf('Function %s() referenced in %s() does not exist.', $symbolName, $methodName)
                     )
-                        ->identifier('pest.coversFunctionNotFound')
+                        ->identifier(PestDiagnosticIdentifiers::COVERS_FUNCTION_NOT_FOUND)
                         ->build();
                 }
 
@@ -91,7 +92,7 @@ final class CoversClassExistsRule implements Rule
                 $errors[] = RuleErrorBuilder::message(
                     sprintf('%s %s referenced in %s() does not exist.', $symbolType, $symbolName, $methodName)
                 )
-                    ->identifier('pest.coversClassNotFound')
+                    ->identifier(PestDiagnosticIdentifiers::COVERS_CLASS_NOT_FOUND)
                     ->build();
             }
         }

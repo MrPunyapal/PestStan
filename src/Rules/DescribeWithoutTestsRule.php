@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
@@ -57,7 +58,7 @@ final class DescribeWithoutTestsRule implements Rule
                 RuleErrorBuilder::message(
                     sprintf("describe() block '%s' contains no tests.", $description)
                 )
-                    ->identifier('pest.describeWithoutTests')
+                    ->identifier(PestDiagnosticIdentifiers::DESCRIBE_WITHOUT_TESTS)
                     ->build(),
             ];
         }
@@ -72,7 +73,7 @@ final class DescribeWithoutTestsRule implements Rule
             RuleErrorBuilder::message(
                 sprintf("describe() block '%s' contains no tests.", $description)
             )
-                ->identifier('pest.describeWithoutTests')
+                ->identifier(PestDiagnosticIdentifiers::DESCRIBE_WITHOUT_TESTS)
                 ->build(),
         ];
     }

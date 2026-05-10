@@ -344,7 +344,7 @@ beforeAll(function () {
 
 Use `beforeEach()` to run setup before each test with `$this` available.
 
-### `pest.throwsClassNotFound` / `pest.invalidThrowsException` — Invalid `throws()` argument
+### `pest.throws.classNotFound` / `pest.throws.invalidException` — Invalid `throws()` argument
 
 `throws()` accepts a class name that implements `Throwable`. Passing a non-existent class or a class that is not `Throwable` is caught at analysis time.
 
@@ -356,7 +356,7 @@ it('fails', function () { ... })->throws(stdClass::class);
 // ✘ throws() expects a Throwable class, got stdClass.
 ```
 
-### `pest.coversClassNotFound` / `pest.coversFunctionNotFound` — Non-existent symbol in `coversClass()`
+### `pest.covers.classNotFound` / `pest.covers.functionNotFound` — Non-existent symbol in `coversClass()`
 
 `coversClass()`, `coversTrait()`, and `coversFunction()` reference symbols by name. PestStan verifies those symbols exist.
 
@@ -365,7 +365,7 @@ it('covers something', function () { ... })->coversClass('App\Nonexistent\Servic
 // ✘ Class App\Nonexistent\Service referenced in coversClass() does not exist.
 ```
 
-### `pest.describeWithoutTests` — Empty `describe()` block
+### `pest.describe.withoutTests` — Empty `describe()` block
 
 A `describe()` block that contains no `it()` or `test()` calls (only hooks, or nothing at all) is likely a mistake.
 
@@ -376,7 +376,7 @@ describe('UserService', function () {
 });
 ```
 
-### `pest.invalidGroupName` — Empty `group()` name
+### `pest.group.invalidName` — Empty `group()` name
 
 `group()` requires at least one non-empty, non-whitespace string argument.
 
@@ -393,11 +393,11 @@ All rules use PHPStan [identifiers](https://phpstan.org/user-guide/ignoring-erro
 # phpstan.neon
 parameters:
     ignoreErrors:
-        - identifier: pest.emptyTestClosure
+        - identifier: pest.test.emptyClosure
 ```
 
 ```php
-/** @phpstan-ignore pest.staticTestClosure */
+/** @phpstan-ignore pest.test.staticClosure */
 it('example', static fn () => expect(true)->toBeTrue());
 ```
 

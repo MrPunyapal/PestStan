@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
@@ -66,7 +67,7 @@ final class DuplicateTestDescriptionRule implements Rule
                 RuleErrorBuilder::message(
                     sprintf("A test with the description '%s' already exists in this file.", $description)
                 )
-                    ->identifier('pest.duplicateTestDescription')
+                    ->identifier(PestDiagnosticIdentifiers::TEST_DUPLICATE_DESCRIPTION)
                     ->build(),
             ];
         }

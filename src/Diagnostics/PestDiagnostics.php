@@ -30,6 +30,11 @@ final class PestDiagnostics
                 $matcher,
             ),
             semanticCategory: self::categoryForRequirement($requirement),
+            confidenceLevel: 'high',
+            fixStrategy: 'adjust_input_type',
+            fixRule: 'pest.expectation.adjustInputType',
+            semanticCode: self::semanticCodeForRequirement($requirement),
+            matcherCategory: self::matcherCategoryForMatcher($matcher, self::categoryForRequirement($requirement)),
             suggestedFix: sprintf('Pass %s to expect() before calling %s().', self::requirementValuePhrase($requirement), $matcher),
             relatedMatcher: $matcher,
             expectedType: self::requirementLabel($requirement),
@@ -50,6 +55,11 @@ final class PestDiagnostics
             message: sprintf('Calling %s() on Expectation<%s>; assertion is impossible.', $matcher, $valueType),
             tip: sprintf('The expectation value is %s, which can never satisfy %s().', $valueType, $matcher),
             semanticCategory: MatcherCategoryRegistry::SEMANTIC_ASSERTION,
+            confidenceLevel: 'high',
+            fixStrategy: 'change_assertion_or_value_type',
+            fixRule: 'pest.expectation.resolveImpossibleAssertion',
+            semanticCode: 'expectation.impossible',
+            matcherCategory: self::matcherCategoryForMatcher($matcher, MatcherCategoryRegistry::TYPE_ASSERTION),
             suggestedFix: sprintf('Remove %s() or change the expectation value type before asserting.', $matcher),
             relatedMatcher: $matcher,
             expectedType: 'compatible assertion type',
@@ -69,6 +79,11 @@ final class PestDiagnostics
             message: sprintf('Calling %s() on Expectation<%s>; assertion is redundant.', $matcher, $valueType),
             tip: sprintf('The expectation value is already guaranteed to satisfy %s().', $matcher),
             semanticCategory: MatcherCategoryRegistry::STATE_ASSERTION,
+            confidenceLevel: 'high',
+            fixStrategy: 'remove_redundant_assertion',
+            fixRule: 'pest.expectation.removeRedundantAssertion',
+            semanticCode: 'expectation.redundant',
+            matcherCategory: self::matcherCategoryForMatcher($matcher, MatcherCategoryRegistry::TYPE_ASSERTION),
             suggestedFix: sprintf('Remove the redundant %s() assertion.', $matcher),
             relatedMatcher: $matcher,
             expectedType: 'already satisfied',
@@ -92,6 +107,10 @@ final class PestDiagnostics
             message: sprintf('%s() runs in static context — $this is not available. Use %s() instead.', $hook, $replacementHook),
             line: $line,
             semanticCategory: 'lifecycle',
+            confidenceLevel: 'high',
+            fixStrategy: 'replace_hook',
+            fixRule: 'pest.lifecycle.replaceStaticHook',
+            semanticCode: self::semanticCodeForLifecycleIdentifier($identifier),
             suggestedFix: sprintf('Replace %s() with %s() when using $this.', $hook, $replacementHook),
             expectedType: 'instance context',
             actualType: 'static context',
@@ -133,6 +152,43 @@ final class PestDiagnostics
             ExpectationMatcherRegistry::REQUIREMENT_COUNTABLE_OR_ITERABLE => MatcherCategoryRegistry::ITERABLE,
             default => MatcherCategoryRegistry::SEMANTIC_ASSERTION,
         };
+    }
+
+    private static function semanticCodeForRequirement(string $requirement): string
+    {
+        return match ($requirement) {
+            ExpectationMatcherRegistry::REQUIREMENT_STRING => 'expectation.requires_string',
+            ExpectationMatcherRegistry::REQUIREMENT_ITERABLE => 'expectation.requires_iterable',
+            ExpectationMatcherRegistry::REQUIREMENT_COUNTABLE_OR_ITERABLE => 'expectation.requires_countable_or_iterable',
+            default => 'expectation.requires_value_type',
+        };
+    }
+
+    private static function semanticCodeForLifecycleIdentifier(string $identifier): string
+    {
+        return match ($identifier) {
+            PestDiagnosticIdentifiers::LIFECYCLE_BEFORE_ALL_THIS_USAGE => 'lifecycle.before_all_this_usage',
+            PestDiagnosticIdentifiers::LIFECYCLE_AFTER_ALL_THIS_USAGE => 'lifecycle.after_all_this_usage',
+            default => 'lifecycle.static_this_usage',
+        };
+    }
+
+    private static function matcherCategoryForMatcher(string $matcher, ?string $fallback = null): ?string
+    {
+        return self::matcherRegistry()->primaryCategoryFor($matcher) ?? $fallback;
+    }
+
+    private static function matcherRegistry(): ExpectationMatcherRegistry
+    {
+        static $matcherRegistry = null;
+
+        if ($matcherRegistry instanceof ExpectationMatcherRegistry) {
+            return $matcherRegistry;
+        }
+
+        $matcherRegistry = new ExpectationMatcherRegistry;
+
+        return $matcherRegistry;
     }
 
     private static function requirementLabel(string $requirement): string
