@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use Pest\Configuration;
 use Pest\PendingCalls\TestCall;
+use Pest\PendingCalls\UsesCall;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
@@ -14,6 +16,7 @@ use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\ObjectType;
+use PHPStan\Type\Type;
 
 /**
  * Detects empty string arguments passed to group().
@@ -37,7 +40,7 @@ final class InvalidGroupNameRule implements Rule
         }
 
         $callerType = $scope->getType($node->var);
-        if (! (new ObjectType(TestCall::class))->isSuperTypeOf($callerType)->yes()) {
+        if (! $this->isSupportedGroupCaller($callerType)) {
             return [];
         }
 
@@ -61,5 +64,16 @@ final class InvalidGroupNameRule implements Rule
         }
 
         return [];
+    }
+
+    private function isSupportedGroupCaller(Type $callerType): bool
+    {
+        foreach ([TestCall::class, UsesCall::class, Configuration::class] as $supportedCaller) {
+            if ((new ObjectType($supportedCaller))->isSuperTypeOf($callerType)->yes()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
