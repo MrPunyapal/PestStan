@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
-use Pest\Expectation;
+use PestStan\Analysis\Expectation\ExpectationSemanticAnalyzer;
+use PestStan\Diagnostics\PestDiagnostic;
+use PestStan\Diagnostics\PestDiagnostics;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
-use PhpParser\Node\Identifier;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
-use PHPStan\Rules\RuleErrorBuilder;
-use PHPStan\Type\MixedType;
-use PHPStan\Type\ObjectType;
-use PHPStan\Type\VerbosityLevel;
 
 /**
  * Detects expectation methods called on incompatible value types.
@@ -23,40 +20,12 @@ use PHPStan\Type\VerbosityLevel;
  */
 final class ExpectationValueTypeRule implements Rule
 {
-    /** @var list<string> */
-    private const REQUIRES_ITERABLE = [
-        'each',
-        'sequence',
-        'toContainEqual',
-        'toContainOnlyInstancesOf',
-    ];
+    private readonly ExpectationSemanticAnalyzer $semanticAnalyzer;
 
-    /** @var list<string> */
-    private const REQUIRES_STRING = [
-        'json',
-        'toStartWith',
-        'toEndWith',
-        'toBeJson',
-        'toBeUppercase',
-        'toBeLowercase',
-        'toBeAlphaNumeric',
-        'toBeAlpha',
-        'toBeDigits',
-        'toBeSnakeCase',
-        'toBeKebabCase',
-        'toBeCamelCase',
-        'toBeStudlyCase',
-        'toBeUuid',
-        'toBeUrl',
-        'toBeSlug',
-        'toMatch',
-        'toBeDirectory',
-        'toBeFile',
-        'toBeReadableFile',
-        'toBeWritableFile',
-        'toBeReadableDirectory',
-        'toBeWritableDirectory',
-    ];
+    public function __construct(?ExpectationSemanticAnalyzer $semanticAnalyzer = null)
+    {
+        $this->semanticAnalyzer = $semanticAnalyzer ?? new ExpectationSemanticAnalyzer;
+    }
 
     public function getNodeType(): string
     {
@@ -68,52 +37,11 @@ final class ExpectationValueTypeRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (! $node->name instanceof Identifier) {
+        $diagnostic = $this->semanticAnalyzer->analyzeInvalidMatcherType($node, $scope);
+        if (! $diagnostic instanceof PestDiagnostic) {
             return [];
         }
 
-        $methodName = $node->name->name;
-        $requiresIterable = in_array($methodName, self::REQUIRES_ITERABLE, true);
-        $requiresString = in_array($methodName, self::REQUIRES_STRING, true);
-
-        if (! $requiresIterable && ! $requiresString) {
-            return [];
-        }
-
-        $callerType = $scope->getType($node->var);
-        if (! (new ObjectType(Expectation::class))->isSuperTypeOf($callerType)->yes()) {
-            return [];
-        }
-
-        $valueType = $callerType->getTemplateType(Expectation::class, 'TValue');
-        if ($valueType instanceof MixedType) {
-            return [];
-        }
-
-        $typeDesc = $valueType->describe(VerbosityLevel::typeOnly());
-
-        if ($requiresIterable && $valueType->isIterable()->no()) {
-            return [
-                RuleErrorBuilder::message(
-                    sprintf('Calling %s() on Expectation<%s> — value is not iterable.', $methodName, $typeDesc)
-                )
-                    ->identifier('pest.expectationRequiresIterable')
-                    ->tip('Pass an iterable value to expect() before calling ' . $methodName . '().')
-                    ->build(),
-            ];
-        }
-
-        if ($requiresString && $valueType->isString()->no()) {
-            return [
-                RuleErrorBuilder::message(
-                    sprintf('Calling %s() on Expectation<%s> — value must be a string.', $methodName, $typeDesc)
-                )
-                    ->identifier('pest.expectationRequiresString')
-                    ->tip('Pass a string value to expect() before calling ' . $methodName . '().')
-                    ->build(),
-            ];
-        }
-
-        return [];
+        return [PestDiagnostics::toRuleError($diagnostic)];
     }
 }
