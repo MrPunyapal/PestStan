@@ -69,9 +69,39 @@ final class ExpectationSemanticAnalyzer
             return null;
         }
 
+        if ($this->shouldSuppressRedundantExpectation($methodCall, $scope)) {
+            return null;
+        }
+
         return PestDiagnostics::redundantExpectation(
             $state->stepResult->methodName,
             $state->stepResult->incomingValueType->describe(VerbosityLevel::typeOnly()),
+        );
+    }
+
+    private function shouldSuppressRedundantExpectation(MethodCall $methodCall, Scope $scope): bool
+    {
+        if (! $methodCall->var instanceof MethodCall) {
+            return false;
+        }
+
+        $previousState = $this->chainStateResolver->resolve($methodCall->var, $scope);
+        if (! $previousState instanceof ExpectationChainState || ! $previousState->stepResult instanceof ExpectationAssertionResult) {
+            return false;
+        }
+
+        if (! $previousState->stepResult->metadata instanceof MatcherSemanticMetadata) {
+            return false;
+        }
+
+        if ($previousState->stepResult->metadata->assertion === null) {
+            return false;
+        }
+
+        return in_array(
+            $previousState->stepResult->status,
+            [ExpectationAssertionResult::ASSERTED, ExpectationAssertionResult::REDUNDANT],
+            true,
         );
     }
 }

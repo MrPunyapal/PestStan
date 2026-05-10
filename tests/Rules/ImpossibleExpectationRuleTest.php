@@ -134,3 +134,20 @@ test('instanceof and numeric impossibilities are reported conservatively', funct
         ],
     ]);
 });
+
+test('impossible semantic chains suppress downstream matcher diagnostics', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/impossible-expectation-semantic-chain.php',
+    ], [
+        [
+            'Calling toBeString() on Expectation<int>; assertion is impossible.',
+            6,
+            'The expectation value is int, which can never satisfy toBeString().',
+        ],
+        [
+            'Calling toBeString() on Expectation<int>; assertion is impossible.',
+            10,
+            'The expectation value is int, which can never satisfy toBeString().',
+        ],
+    ]);
+});

@@ -78,6 +78,9 @@ final class MatcherAssertionRegistry
         'toBeResource' => 'resource',
     ];
 
+    /** @var array<string, Type> */
+    private array $staticAssertedTypeCache = [];
+
     public function assertionFor(string $methodName): ?string
     {
         return self::METHOD_ASSERTIONS[$methodName] ?? null;
@@ -90,7 +93,11 @@ final class MatcherAssertionRegistry
             return null;
         }
 
-        return match ($assertion) {
+        if ($assertion !== self::INSTANCE_OF && isset($this->staticAssertedTypeCache[$assertion])) {
+            return $this->staticAssertedTypeCache[$assertion];
+        }
+
+        $assertedType = match ($assertion) {
             self::STRING => new StringType,
             self::INT => new IntegerType,
             self::FLOAT => new FloatType,
@@ -127,6 +134,14 @@ final class MatcherAssertionRegistry
             self::INSTANCE_OF => $this->resolveToBeInstanceOf($methodCall, $scope),
             default => null,
         };
+
+        if (! $assertedType instanceof Type || $assertion === self::INSTANCE_OF) {
+            return $assertedType;
+        }
+
+        $this->staticAssertedTypeCache[$assertion] = $assertedType;
+
+        return $assertedType;
     }
 
     private function resolveToBeInstanceOf(MethodCall $methodCall, Scope $scope): Type

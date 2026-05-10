@@ -114,3 +114,15 @@ test('inheritance and scalar redundancies are reported', function (): void {
         ],
     ]);
 });
+
+test('redundant semantic chains avoid duplicate diagnostics', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/redundant-expectation-semantic-chain.php',
+    ], [
+        [
+            'Calling toBeString() on Expectation<string>; assertion is redundant.',
+            6,
+            'The expectation value is already guaranteed to satisfy toBeString().',
+        ],
+    ]);
+});

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ExpectationMethods;
 
+use ArrayIterator;
 use Pest\Mixins\Expectation;
 
 use function PHPStan\Testing\assertType;
@@ -253,6 +254,16 @@ class Person implements NamedEntity {}
 
 class Employee extends Person {}
 
+function getEmployeeOrString(): Person|string
+{
+    return random_int(0, 1) === 1 ? new Employee : 'hello';
+}
+
+function getNamedEntityOrString(): NamedEntity|string
+{
+    return random_int(0, 1) === 1 ? new Employee : 'hello';
+}
+
 function testStatePropagationAcrossMatchers(): void
 {
     /** @var array<string, int>|string $value */
@@ -280,6 +291,47 @@ function testToBeScalarNarrowsScalarUnions(): void
     $result = expect($value)->toBeScalar();
 
     assertType('Pest\Expectation<int|string>', $result);
+}
+
+function testToBeInstanceOfNarrowsParentBranches(): void
+{
+    $value = getEmployeeOrString();
+
+    $result = expect($value)->toBeInstanceOf(Employee::class);
+
+    assertType('Pest\Expectation<ExpectationMethods\Employee>', $result);
+    assertType('ExpectationMethods\Employee', $result->value);
+}
+
+function testToBeInstanceOfNarrowsInterfaceBranches(): void
+{
+    $value = getNamedEntityOrString();
+
+    $result = expect($value)->toBeInstanceOf(Person::class);
+
+    assertType('Pest\Expectation<ExpectationMethods\Person>', $result);
+    assertType('ExpectationMethods\Person', $result->value);
+}
+
+function testToBeScalarPreservesNumericStringBranches(): void
+{
+    /** @var numeric-string|int|array<int> $value */
+    $value = '42';
+
+    $result = expect($value)->toBeScalar();
+
+    assertType('Pest\Expectation<int|numeric-string>', $result);
+}
+
+function testToBeIterableNarrowsIterableObjects(): void
+{
+    /** @var ArrayIterator<int, int>|string $value */
+    $value = new ArrayIterator([1, 2, 3]);
+
+    $result = expect($value)->toBeIterable();
+
+    assertType('Pest\Expectation<ArrayIterator<int, int>>', $result);
+    assertType('ArrayIterator<int, int>', $result->value);
 }
 
 function testChainedNot(): void
