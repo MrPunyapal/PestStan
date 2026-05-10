@@ -19,59 +19,71 @@ test('redundant expectations are reported', function (): void {
         __DIR__ . '/data/redundant-expectation.php',
     ], [
         [
-            'Calling toBeTrue() on Expectation<true> will always pass — the assertion is redundant.',
+            'Calling toBeTrue() on Expectation<true>; assertion is redundant.',
             7,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeTrue().',
         ],
         [
-            'Calling toBeFalse() on Expectation<false> will always pass — the assertion is redundant.',
+            'Calling toBeFalse() on Expectation<false>; assertion is redundant.',
             11,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeFalse().',
         ],
         [
-            'Calling toBeBool() on Expectation<true> will always pass — the assertion is redundant.',
+            'Calling toBeBool() on Expectation<true>; assertion is redundant.',
             15,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeBool().',
         ],
         [
-            'Calling toBeString() on Expectation<string> will always pass — the assertion is redundant.',
+            'Calling toBeString() on Expectation<string>; assertion is redundant.',
             19,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeString().',
         ],
         [
-            'Calling toBeInt() on Expectation<int> will always pass — the assertion is redundant.',
+            'Calling toBeInt() on Expectation<int>; assertion is redundant.',
             23,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeInt().',
         ],
         [
-            'Calling toBeFloat() on Expectation<float> will always pass — the assertion is redundant.',
+            'Calling toBeFloat() on Expectation<float>; assertion is redundant.',
             27,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeFloat().',
         ],
         [
-            'Calling toBeNull() on Expectation<null> will always pass — the assertion is redundant.',
+            'Calling toBeNull() on Expectation<null>; assertion is redundant.',
             31,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeNull().',
         ],
         [
-            'Calling toBeArray() on Expectation<array> will always pass — the assertion is redundant.',
+            'Calling toBeArray() on Expectation<array>; assertion is redundant.',
             35,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeArray().',
         ],
         [
-            'Calling toBeScalar() on Expectation<string> will always pass — the assertion is redundant.',
+            'Calling toBeScalar() on Expectation<string>; assertion is redundant.',
             39,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeScalar().',
         ],
         [
-            'Calling toBeNumeric() on Expectation<int> will always pass — the assertion is redundant.',
+            'Calling toBeNumeric() on Expectation<int>; assertion is redundant.',
             43,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeNumeric().',
         ],
         [
-            'Calling toBeInstanceOf() on Expectation<stdClass> will always pass — the assertion is redundant.',
+            'Calling toBeInstanceOf() on Expectation<stdClass>; assertion is redundant.',
             47,
-            'Consider removing this assertion — the value is already guaranteed to be this type.',
+            'The expectation value is already guaranteed to satisfy toBeInstanceOf().',
+        ],
+    ]);
+});
+
+test('redundant chains ignore earlier invalid matcher steps', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/redundant-expectation-chain.php',
+    ], [
+        [
+            'Calling toBeString() on Expectation<string>; assertion is redundant.',
+            10,
+            'The expectation value is already guaranteed to satisfy toBeString().',
         ],
     ]);
 });

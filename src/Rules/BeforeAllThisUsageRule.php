@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\Diagnostics\PestDiagnostics;
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
@@ -18,7 +19,6 @@ use PhpParser\Node\Stmt\Expression;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
-use PHPStan\Rules\RuleErrorBuilder;
 
 /**
  * Detects $this usage inside static Pest hook closures.
@@ -111,15 +111,13 @@ final class BeforeAllThisUsageRule implements Rule
     {
         $hookConfig = self::STATIC_HOOKS[$functionName];
 
-        return RuleErrorBuilder::message(
-            sprintf(
-                '%s() runs in static context — $this is not available. Use %s() instead.',
+        return PestDiagnostics::toRuleError(
+            PestDiagnostics::invalidLifecycleThisUsage(
                 $functionName,
-                $hookConfig['replacement']
+                $hookConfig['replacement'],
+                $hookConfig['identifier'],
+                $line,
             )
-        )
-            ->identifier($hookConfig['identifier'])
-            ->line($line)
-            ->build();
+        );
     }
 }
