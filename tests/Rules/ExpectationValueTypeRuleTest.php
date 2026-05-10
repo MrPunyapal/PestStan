@@ -70,3 +70,65 @@ test('expectation value type mismatches are reported', function (): void {
         ],
     ]);
 });
+
+test('rector-pest string matchers require string expectation values', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/expectation-modern-string-matchers.php',
+    ], [
+        [
+            'Calling toBeUppercase() on Expectation<int> — value must be a string.',
+            7,
+            'Pass a string value to expect() before calling toBeUppercase().',
+        ],
+        [
+            'Calling toBeLowercase() on Expectation<int> — value must be a string.',
+            11,
+            'Pass a string value to expect() before calling toBeLowercase().',
+        ],
+        [
+            'Calling toBeAlphaNumeric() on Expectation<int> — value must be a string.',
+            15,
+            'Pass a string value to expect() before calling toBeAlphaNumeric().',
+        ],
+        [
+            'Calling toBeAlpha() on Expectation<int> — value must be a string.',
+            19,
+            'Pass a string value to expect() before calling toBeAlpha().',
+        ],
+        [
+            'Calling toBeSnakeCase() on Expectation<int> — value must be a string.',
+            23,
+            'Pass a string value to expect() before calling toBeSnakeCase().',
+        ],
+        [
+            'Calling toBeKebabCase() on Expectation<int> — value must be a string.',
+            27,
+            'Pass a string value to expect() before calling toBeKebabCase().',
+        ],
+        [
+            'Calling toBeCamelCase() on Expectation<int> — value must be a string.',
+            31,
+            'Pass a string value to expect() before calling toBeCamelCase().',
+        ],
+        [
+            'Calling toBeStudlyCase() on Expectation<int> — value must be a string.',
+            35,
+            'Pass a string value to expect() before calling toBeStudlyCase().',
+        ],
+        [
+            'Calling toBeUuid() on Expectation<int> — value must be a string.',
+            39,
+            'Pass a string value to expect() before calling toBeUuid().',
+        ],
+        [
+            'Calling toBeUrl() on Expectation<int> — value must be a string.',
+            43,
+            'Pass a string value to expect() before calling toBeUrl().',
+        ],
+        [
+            'Calling toBeSlug() on Expectation<int> — value must be a string.',
+            47,
+            'Pass a string value to expect() before calling toBeSlug().',
+        ],
+    ]);
+});
