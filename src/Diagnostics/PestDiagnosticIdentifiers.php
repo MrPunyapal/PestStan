@@ -78,9 +78,11 @@ final class PestDiagnosticIdentifiers
         static $all = null;
 
         if (is_array($all)) {
+            /** @var list<string> $all */
             return $all;
         }
 
+        /** @var list<string> $all */
         $all = [
             self::TEST_DUPLICATE_DESCRIPTION,
             self::GROUP_INVALID_NAME,
@@ -126,6 +128,7 @@ final class PestDiagnosticIdentifiers
         static $aliasesByCanonical = null;
 
         if (! is_array($aliasesByCanonical)) {
+            /** @var array<string, list<string>> $aliasesByCanonical */
             $aliasesByCanonical = [];
 
             foreach (self::ALIAS_TO_CANONICAL as $alias => $resolvedIdentifier) {
@@ -134,6 +137,9 @@ final class PestDiagnosticIdentifiers
             }
         }
 
-        return $aliasesByCanonical[$canonical] ?? [];
+        /** @var list<string> $aliases */
+        $aliases = $aliasesByCanonical[$canonical] ?? [];
+
+        return $aliases;
     }
 }
