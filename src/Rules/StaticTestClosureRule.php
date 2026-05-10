@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
@@ -47,7 +48,7 @@ final class StaticTestClosureRule implements Rule
             RuleErrorBuilder::message(
                 sprintf('Test closure passed to %s() must not be static. Remove the `static` keyword.', $name)
             )
-                ->identifier('pest.staticTestClosure')
+                ->identifier(PestDiagnosticIdentifiers::TEST_STATIC_CLOSURE)
                 ->build(),
         ];
     }

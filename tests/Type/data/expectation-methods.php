@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ExpectationMethods;
 
+use ArrayIterator;
 use Pest\Mixins\Expectation;
 
 use function PHPStan\Testing\assertType;
@@ -125,7 +126,7 @@ function testToBeArrayNarrows(): void
     /** @var array<string, int>|string $value */
     $value = ['a' => 1];
     $result = expect($value)->toBeArray();
-    assertType('Pest\Expectation<array<int|string, mixed>>', $result);
+    assertType('Pest\Expectation<array<string, int>>', $result);
 }
 
 function testToBeNullNarrows(): void
@@ -245,6 +246,115 @@ function testToBeListNarrows(): void
     $value = [1, 2, 3];
     $result = expect($value)->toBeList();
     assertType('Pest\Expectation<list>', $result);
+}
+
+interface NamedEntity {}
+
+class Person implements NamedEntity {}
+
+class Employee extends Person {}
+
+function getEmployeeOrString(): Person|string
+{
+    return random_int(0, 1) === 1 ? new Employee : 'hello';
+}
+
+function getNamedEntityOrString(): NamedEntity|string
+{
+    return random_int(0, 1) === 1 ? new Employee : 'hello';
+}
+
+function testStatePropagationAcrossMatchers(): void
+{
+    /** @var array<string, int>|string $value */
+    $value = ['a' => 1];
+
+    assertType('Pest\Expectations\EachExpectation<array<string, int>>', expect($value)->toBeArray()->each());
+    assertType('Pest\Expectation<array<string, int>>', expect($value)->toBeArray()->toHaveCount(1));
+}
+
+function testToBeNumericPreservesNumericStrings(): void
+{
+    /** @var numeric-string|bool $value */
+    $value = '42';
+
+    $result = expect($value)->toBeNumeric();
+
+    assertType('Pest\Expectation<numeric-string>', $result);
+}
+
+function testToBeScalarNarrowsScalarUnions(): void
+{
+    /** @var int|string|array<int> $value */
+    $value = 42;
+
+    $result = expect($value)->toBeScalar();
+
+    assertType('Pest\Expectation<int|string>', $result);
+}
+
+function testToBeInstanceOfNarrowsParentBranches(): void
+{
+    $value = getEmployeeOrString();
+
+    $result = expect($value)->toBeInstanceOf(Employee::class);
+
+    assertType('Pest\Expectation<ExpectationMethods\Employee>', $result);
+    assertType('ExpectationMethods\Employee', $result->value);
+}
+
+function testToBeInstanceOfNarrowsInterfaceBranches(): void
+{
+    $value = getNamedEntityOrString();
+
+    $result = expect($value)->toBeInstanceOf(Person::class);
+
+    assertType('Pest\Expectation<ExpectationMethods\Person>', $result);
+    assertType('ExpectationMethods\Person', $result->value);
+}
+
+function testToBeScalarPreservesNumericStringBranches(): void
+{
+    /** @var numeric-string|int|array<int> $value */
+    $value = '42';
+
+    $result = expect($value)->toBeScalar();
+
+    assertType('Pest\Expectation<int|numeric-string>', $result);
+}
+
+function testToBeIterableNarrowsIterableObjects(): void
+{
+    /** @var ArrayIterator<int, int>|string $value */
+    $value = new ArrayIterator([1, 2, 3]);
+
+    $result = expect($value)->toBeIterable();
+
+    assertType('Pest\Expectation<ArrayIterator<int, int>>', $result);
+    assertType('ArrayIterator<int, int>', $result->value);
+}
+
+function testMultilineJsonChainPropagation(): void
+{
+    $result = expect('{"users":[1,2]}')
+        ->json()
+        ->toBeArray()
+        ->toHaveCount(1);
+
+    assertType('Pest\Expectation<array<int|string, mixed>>', $result);
+}
+
+function testChainedSemanticAssertionsStayDeterministic(): void
+{
+    /** @var ArrayIterator<int, int>|string $value */
+    $value = new ArrayIterator([1, 2, 3]);
+
+    $result = expect($value)
+        ->toBeIterable()
+        ->toBeInstanceOf(ArrayIterator::class)
+        ->toHaveCount(3);
+
+    assertType('Pest\Expectation<ArrayIterator<int, int>>', $result);
 }
 
 function testChainedNot(): void

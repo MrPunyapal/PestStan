@@ -28,3 +28,18 @@ test('this usage in before all is reported', function (): void {
         ],
     ]);
 });
+
+test('this usage in after all is reported', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/after-all-this-usage.php',
+    ], [
+        [
+            'afterAll() runs in static context — $this is not available. Use afterEach() instead.',
+            7,
+        ],
+        [
+            'afterAll() runs in static context — $this is not available. Use afterEach() instead.',
+            11,
+        ],
+    ]);
+});

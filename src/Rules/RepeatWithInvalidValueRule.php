@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PestStan\Rules;
 
 use Pest\PendingCalls\TestCall;
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
@@ -53,7 +54,7 @@ final class RepeatWithInvalidValueRule implements Rule
                     RuleErrorBuilder::message(
                         sprintf('repeat() requires a value greater than 0, got %d.', $value)
                     )
-                        ->identifier('pest.repeatInvalidValue')
+                        ->identifier(PestDiagnosticIdentifiers::REPEAT_INVALID_VALUE)
                         ->build(),
                 ];
             }

@@ -232,7 +232,7 @@ expect('App')->toUseStrictTypes();
 
 PestStan ships with rules that catch common Pest mistakes at static analysis time, before your tests run.
 
-### `pest.emptyTestClosure` — Empty test body
+### `pest.test.emptyClosure` — Empty test body
 
 Detects tests whose closure contains no statements.
 
@@ -242,7 +242,7 @@ it('does something', function () {});
 // ✘ Test 'does something' has an empty closure body. Did you forget to add assertions?
 ```
 
-### `pest.staticTestClosure` — Static test closure
+### `pest.test.staticClosure` — Static test closure
 
 Pest binds `$this` inside every test closure to the `TestCase` instance. Marking the closure `static` prevents that binding.
 
@@ -253,7 +253,7 @@ it('example', static function () {
 });
 ```
 
-### `pest.beforeAllInDescribe` / `pest.afterAllInDescribe` — Lifecycle hooks inside `describe()`
+### `pest.lifecycle.beforeAllDisallowed` / `pest.lifecycle.afterAllDisallowed` — Lifecycle hooks inside `describe()`
 
 Pest does not support `beforeAll()` or `afterAll()` inside `describe()` blocks — calling them throws at runtime.
 
@@ -267,7 +267,7 @@ describe('suite', function () {
 });
 ```
 
-### `pest.repeatInvalidValue` — Invalid `repeat()` count
+### `pest.execution.invalidRepeatValue` — Invalid `repeat()` count
 
 `repeat()` requires a positive integer greater than zero.
 
@@ -276,7 +276,7 @@ it('runs multiple times', function () { /* ... */ })->repeat(0);
 // ✘ repeat() requires a value greater than 0, got 0.
 ```
 
-### `pest.duplicateTestDescription` — Duplicate test description
+### `pest.test.duplicateDescription` — Duplicate test description
 
 Two tests in the same file with the same description will collide at runtime.
 
@@ -286,53 +286,53 @@ it('does something', fn () => expect(2)->toBe(2));
 // ✘ A test with the description 'it does something' already exists in this file.
 ```
 
-### `pest.impossibleExpectation` — Assertion that always fails
+### `pest.expectation.impossible` — Assertion that always fails
 
 When the static type already makes an assertion impossible, PestStan reports it.
 
 ```php
 expect(42)->toBeString();
-// ✘ Calling toBeString() on Expectation<int> will always fail.
+// ✘ Calling toBeString() on Expectation<int>; assertion is impossible.
 
 expect('hello')->toBeNull();
-// ✘ Calling toBeNull() on Expectation<string> will always fail.
+// ✘ Calling toBeNull() on Expectation<string>; assertion is impossible.
 ```
 
 Covered assertions: `toBeString`, `toBeInt`, `toBeFloat`, `toBeBool`, `toBeTrue`, `toBeFalse`, `toBeNull`, `toBeArray`, `toBeList`, `toBeObject`, `toBeCallable`, `toBeIterable`, `toBeNumeric`, `toBeScalar`, `toBeInstanceOf`.
 
-### `pest.redundantExpectation` — Assertion that always passes
+### `pest.expectation.redundant` — Assertion that always passes
 
 When the static type already guarantees an assertion will always succeed, the assertion is redundant and adds no value.
 
 ```php
 expect(true)->toBeTrue();
-// ✘ Calling toBeTrue() on Expectation<true> will always pass — the assertion is redundant.
+// ✘ Calling toBeTrue() on Expectation<true>; assertion is redundant.
 
 expect('hello')->toBeString();
-// ✘ Calling toBeString() on Expectation<string> will always pass — the assertion is redundant.
+// ✘ Calling toBeString() on Expectation<string>; assertion is redundant.
 
 expect(42)->toBeNumeric();
-// ✘ Calling toBeNumeric() on Expectation<int> will always pass — the assertion is redundant.
+// ✘ Calling toBeNumeric() on Expectation<int>; assertion is redundant.
 ```
 
 Covered assertions: `toBeString`, `toBeInt`, `toBeFloat`, `toBeBool`, `toBeTrue`, `toBeFalse`, `toBeNull`, `toBeArray`, `toBeList`, `toBeObject`, `toBeCallable`, `toBeIterable`, `toBeNumeric`, `toBeScalar`, `toBeInstanceOf`.
 
-### `pest.expectationRequiresIterable` / `pest.expectationRequiresString` — Incompatible value type
+### `pest.expectation.requiresIterable` / `pest.expectation.requiresString` — Incompatible value type
 
 Some expectation methods require the value to satisfy a pre-condition.
 
 ```php
 expect(42)->each(fn ($e) => $e->toBeInt());
-// ✘ Calling each() on Expectation<int> — value is not iterable.
+// ✘ Calling each() on Expectation<int>; matcher requires iterable.
 
 expect(42)->toBeJson();
-// ✘ Calling toBeJson() on Expectation<int> — value must be a string.
+// ✘ Calling toBeJson() on Expectation<int>; matcher requires string.
 ```
 
 Methods requiring an iterable: `each`, `sequence`.  
 Methods requiring a string: `json`, `toStartWith`, `toEndWith`, `toBeJson`, `toBeDirectory`, `toBeFile`, `toBeReadableFile`, `toBeWritableFile`, `toBeReadableDirectory`, `toBeWritableDirectory`.
 
-### `pest.beforeAllThisUsage` — `$this` inside `beforeAll()`
+### `pest.lifecycle.beforeAllThisUsage` — `$this` inside `beforeAll()`
 
 `beforeAll()` runs once in a static context before any tests in the file. `$this` is not available.
 
@@ -344,7 +344,7 @@ beforeAll(function () {
 
 Use `beforeEach()` to run setup before each test with `$this` available.
 
-### `pest.throwsClassNotFound` / `pest.invalidThrowsException` — Invalid `throws()` argument
+### `pest.throws.classNotFound` / `pest.throws.invalidException` — Invalid `throws()` argument
 
 `throws()` accepts a class name that implements `Throwable`. Passing a non-existent class or a class that is not `Throwable` is caught at analysis time.
 
@@ -356,7 +356,7 @@ it('fails', function () { ... })->throws(stdClass::class);
 // ✘ throws() expects a Throwable class, got stdClass.
 ```
 
-### `pest.coversClassNotFound` / `pest.coversFunctionNotFound` — Non-existent symbol in `coversClass()`
+### `pest.covers.classNotFound` / `pest.covers.functionNotFound` — Non-existent symbol in `coversClass()`
 
 `coversClass()`, `coversTrait()`, and `coversFunction()` reference symbols by name. PestStan verifies those symbols exist.
 
@@ -365,7 +365,7 @@ it('covers something', function () { ... })->coversClass('App\Nonexistent\Servic
 // ✘ Class App\Nonexistent\Service referenced in coversClass() does not exist.
 ```
 
-### `pest.describeWithoutTests` — Empty `describe()` block
+### `pest.describe.withoutTests` — Empty `describe()` block
 
 A `describe()` block that contains no `it()` or `test()` calls (only hooks, or nothing at all) is likely a mistake.
 
@@ -376,7 +376,7 @@ describe('UserService', function () {
 });
 ```
 
-### `pest.invalidGroupName` — Empty `group()` name
+### `pest.group.invalidName` — Empty `group()` name
 
 `group()` requires at least one non-empty, non-whitespace string argument.
 
@@ -393,13 +393,23 @@ All rules use PHPStan [identifiers](https://phpstan.org/user-guide/ignoring-erro
 # phpstan.neon
 parameters:
     ignoreErrors:
-        - identifier: pest.emptyTestClosure
+        - identifier: pest.test.emptyClosure
 ```
 
 ```php
-/** @phpstan-ignore pest.staticTestClosure */
+/** @phpstan-ignore pest.test.staticClosure */
 it('example', static fn () => expect(true)->toBeTrue());
 ```
+
+Canonical identifiers are emitted in diagnostics and rule errors. Legacy identifiers remain resolvable through [src/Diagnostics/PestDiagnosticIdentifiers.php](src/Diagnostics/PestDiagnosticIdentifiers.php) so downstream tooling can canonicalize older baselines or stored metadata safely.
+
+## Semantic Architecture
+
+PestStan stays on the analysis side of the ecosystem boundary. [src/Analysis/Expectation/ExpectationSemanticAnalyzer.php](src/Analysis/Expectation/ExpectationSemanticAnalyzer.php) owns chain-aware reasoning, [src/Analysis/Expectation/ExpectationChainStateResolver.php](src/Analysis/Expectation/ExpectationChainStateResolver.php) propagates expectation state through fluent chains, and [src/Analysis/Expectation/ExpectationTypeNarrower.php](src/Analysis/Expectation/ExpectationTypeNarrower.php) applies conservative type narrowing without speculative inference.
+
+Diagnostics are the interoperability contract surface. [src/Diagnostics/PestDiagnostic.php](src/Diagnostics/PestDiagnostic.php) is immutable and JSON-safe, [src/Diagnostics/PestDiagnostics.php](src/Diagnostics/PestDiagnostics.php) emits canonical identifiers plus machine-readable metadata, and [src/Diagnostics/PestDiagnosticIdentifiers.php](src/Diagnostics/PestDiagnosticIdentifiers.php) resolves legacy aliases to the canonical taxonomy.
+
+The boundary with `rector-pest` is intentional: PestStan reports stable semantic facts, while Rector consumes those facts to decide whether an automated remediation is safe. PestStan does not apply fixes; it provides deterministic identifiers, semantic codes, matcher categories, and type reasoning that other tools can consume.
 
 ## Testing
 

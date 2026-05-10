@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PestStan\Rules;
 
 use Pest\PendingCalls\TestCall;
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ClassConstFetch;
@@ -65,7 +66,7 @@ final class InvalidThrowsExceptionRule implements Rule
                 RuleErrorBuilder::message(
                     sprintf('Class %s passed to throws() does not exist.', $className)
                 )
-                    ->identifier('pest.throwsClassNotFound')
+                    ->identifier(PestDiagnosticIdentifiers::THROWS_CLASS_NOT_FOUND)
                     ->build(),
             ];
         }
@@ -76,7 +77,7 @@ final class InvalidThrowsExceptionRule implements Rule
                 RuleErrorBuilder::message(
                     sprintf('throws() expects a Throwable class, got %s.', $className)
                 )
-                    ->identifier('pest.invalidThrowsException')
+                    ->identifier(PestDiagnosticIdentifiers::THROWS_INVALID_EXCEPTION)
                     ->build(),
             ];
         }

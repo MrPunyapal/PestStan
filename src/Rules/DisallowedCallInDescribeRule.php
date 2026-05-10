@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PestStan\Rules;
 
+use PestStan\Diagnostics\PestDiagnosticIdentifiers;
 use PestStan\PestFunctionDetector;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Closure;
@@ -24,8 +25,8 @@ final class DisallowedCallInDescribeRule implements Rule
 {
     /** @var array<string, string> */
     private const FORBIDDEN_FUNCTIONS = [
-        'beforeAll' => 'pest.beforeAllInDescribe',
-        'afterAll' => 'pest.afterAllInDescribe',
+        'beforeAll' => PestDiagnosticIdentifiers::DESCRIBE_BEFORE_ALL_DISALLOWED,
+        'afterAll' => PestDiagnosticIdentifiers::DESCRIBE_AFTER_ALL_DISALLOWED,
     ];
 
     public function getNodeType(): string
