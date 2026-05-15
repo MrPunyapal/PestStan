@@ -9,9 +9,9 @@
         "phpstan/phpstan": "^2.0"
     },
     "require-dev": {
+        "laravel/pao": "^1.0",
         "laravel/pint": "^1.18",
         "mrpunyapal/rector-pest": "^0.2.0",
-        "nunomaduro/pao": "^0.1.4",
         "pestphp/pest": "^3.0 || ^4.0 || ^5.0",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-strict-rules": "^2.0",
