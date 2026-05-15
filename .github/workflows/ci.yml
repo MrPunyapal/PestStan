@@ -27,7 +27,7 @@ jobs:
           restore-keys: ${{ runner.os }}-php-8.2-
 
       - name: Prepare dependencies
-        run: composer remove nunomaduro/pao --dev --no-interaction --no-update
+        run: composer remove laravel/pao --dev --no-interaction --no-update
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -58,7 +58,7 @@ jobs:
           restore-keys: ${{ runner.os }}-php-8.2-
 
       - name: Prepare dependencies
-        run: composer remove nunomaduro/pao --dev --no-interaction --no-update
+        run: composer remove laravel/pao --dev --no-interaction --no-update
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -93,7 +93,7 @@ jobs:
       - name: Prepare dependencies
         run: |
           if [ "${{ matrix.php }}" == "8.2" ]; then
-            composer remove nunomaduro/pao --dev --no-interaction --no-update
+            composer remove laravel/pao --dev --no-interaction --no-update
           fi
 
       - name: Install dependencies
