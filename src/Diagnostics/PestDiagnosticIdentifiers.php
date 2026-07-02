@@ -44,6 +44,8 @@ final class PestDiagnosticIdentifiers
 
     public const LIFECYCLE_AFTER_ALL_THIS_USAGE = 'pest.lifecycle.afterAllThisUsage';
 
+    public const CONFIG_REDUNDANT_LOCAL_USE = 'pest.config.redundantLocalUse';
+
     /** @var array<string, string> */
     private const ALIAS_TO_CANONICAL = [
         'pest.duplicateTestDescription' => self::TEST_DUPLICATE_DESCRIPTION,
@@ -103,6 +105,7 @@ final class PestDiagnosticIdentifiers
             self::EXPECTATION_REDUNDANT,
             self::LIFECYCLE_BEFORE_ALL_THIS_USAGE,
             self::LIFECYCLE_AFTER_ALL_THIS_USAGE,
+            self::CONFIG_REDUNDANT_LOCAL_USE,
         ];
 
         return $all;

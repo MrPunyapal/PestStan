@@ -23,6 +23,9 @@ final class PestConfigReader
     /** @var array<string, list<string>> Maps normalized directory paths to fully-qualified class/trait names */
     private array $directoryMap = [];
 
+    /** @var array<string, list<array{class: string, config: string}>> */
+    private array $globalUseDirectoryMap = [];
+
     private bool $parsed = false;
 
     /**
@@ -56,6 +59,27 @@ final class PestConfigReader
         return array_values(array_unique($bindings));
     }
 
+    /**
+     * Resolves statically known pest()->use(...)->in(...) declarations that cover the given file.
+     *
+     * @return list<array{class: string, config: string}>
+     */
+    public function resolveGlobalUses(string $filePath): array
+    {
+        $this->ensureParsed();
+
+        $normalizedFile = $this->fileDiscoverer->normalizePath($filePath);
+        $bindings = [];
+
+        foreach ($this->globalUseDirectoryMap as $directory => $directoryBindings) {
+            if (str_starts_with($normalizedFile, $directory)) {
+                array_push($bindings, ...$directoryBindings);
+            }
+        }
+
+        return $bindings;
+    }
+
     private function ensureParsed(): void
     {
         if ($this->parsed) {
@@ -84,7 +108,7 @@ final class PestConfigReader
         $pestFileDir = dirname($filePath);
 
         $this->extractUsesBindings($nodeFinder, $stmts, $pestFileDir);
-        $this->extractPestExtendBindings($nodeFinder, $stmts, $pestFileDir);
+        $this->extractPestExtendBindings($nodeFinder, $stmts, $pestFileDir, $filePath);
     }
 
     /**
@@ -131,7 +155,7 @@ final class PestConfigReader
      *
      * @param  Node[]  $stmts
      */
-    private function extractPestExtendBindings(NodeFinder $nodeFinder, array $stmts, string $pestFileDir): void
+    private function extractPestExtendBindings(NodeFinder $nodeFinder, array $stmts, string $pestFileDir, string $pestFile): void
     {
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
@@ -146,6 +170,10 @@ final class PestConfigReader
             }
 
             $this->registerDirectoryBindings($classNames, $methodCall, $pestFileDir);
+
+            if ($this->isPestUseChain($methodCall->var)) {
+                $this->registerGlobalUseBindings($classNames, $methodCall, $pestFileDir, $pestFile);
+            }
         }
 
         foreach ($methodCalls as $methodCall) {
@@ -213,6 +241,15 @@ final class PestConfigReader
         return $this->fileDiscoverer->isMethodNamed($methodCall, 'use');
     }
 
+    private function isPestUseChain(Expr $expr): bool
+    {
+        if ($expr instanceof MethodCall && $this->fileDiscoverer->isMethodNamed($expr, 'use') && $this->isPestFuncCall($expr->var)) {
+            return true;
+        }
+
+        return $expr instanceof MethodCall && $this->isPestUseChain($expr->var);
+    }
+
     private function isPestFuncCall(Expr $expr): bool
     {
         return $expr instanceof FuncCall && $this->isFuncNamed($expr, 'pest');
@@ -221,9 +258,11 @@ final class PestConfigReader
     /**
      * Extracts directory strings from ->in('Feature', 'Unit') arguments.
      *
-     * @return string[]
+     * Returns null when any path is dynamic, because coverage cannot be proven.
+     *
+     * @return list<string>|null
      */
-    private function extractInDirectories(MethodCall $methodCall): array
+    private function extractInDirectories(MethodCall $methodCall): ?array
     {
         $directories = [];
 
@@ -237,13 +276,17 @@ final class PestConfigReader
             }
 
             if (! $value instanceof ConstFetch) {
-                continue;
+                return null;
             }
 
             $name = $value->name->toString();
             if ($name === '__DIR__') {
                 $directories[] = '.';
+
+                continue;
             }
+
+            return null;
         }
 
         return $directories;
@@ -258,15 +301,40 @@ final class PestConfigReader
     {
         $directories = $this->extractInDirectories($inMethodCall);
 
-        if ($directories === []) {
-            $this->appendBindings($this->fileDiscoverer->normalizePath($pestFileDir) . '/', $classNames);
-
+        if ($directories === null || $directories === []) {
             return;
         }
 
         foreach ($directories as $dir) {
             $fullPath = $this->fileDiscoverer->normalizePath($pestFileDir . '/' . $dir) . '/';
             $this->appendBindings($fullPath, $classNames);
+        }
+    }
+
+    /**
+     * @param  list<string>  $classNames
+     */
+    private function registerGlobalUseBindings(
+        array $classNames,
+        MethodCall $inMethodCall,
+        string $pestFileDir,
+        string $pestFile,
+    ): void {
+        $directories = $this->extractInDirectories($inMethodCall);
+        if ($directories === null || $directories === []) {
+            return;
+        }
+
+        foreach ($directories as $dir) {
+            $directory = $this->fileDiscoverer->normalizePath($pestFileDir . '/' . $dir) . '/';
+            $this->globalUseDirectoryMap[$directory] ??= [];
+
+            foreach ($classNames as $className) {
+                $this->globalUseDirectoryMap[$directory][] = [
+                    'class' => $className,
+                    'config' => $this->fileDiscoverer->normalizePath($pestFile),
+                ];
+            }
         }
     }
 

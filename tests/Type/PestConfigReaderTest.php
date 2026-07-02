@@ -7,6 +7,8 @@ namespace Tests\Type;
 use PestStan\Type\Pest\PestConfigReader;
 use PestStan\Type\Pest\PestFileDiscoverer;
 use RuntimeException;
+use Tests\Rules\Fixtures\DynamicTrait;
+use Tests\Rules\Fixtures\RefreshDatabase;
 use Tests\Type\Fixtures\CustomTestCase;
 use Tests\Type\Fixtures\HelperTrait;
 
@@ -62,4 +64,18 @@ test('returns empty for unmatched path', function () use ($makeReader): void {
     $bindings = $reader->resolveBindings('/some/other/path/Test.php');
 
     expect($bindings)->toBeEmpty();
+});
+
+test('resolves statically known global uses and skips dynamic paths', function (): void {
+    $fixtureDir = realpath(__DIR__ . '/../Rules/data/redundant-local-use');
+    if ($fixtureDir === false) {
+        throw new RuntimeException('Redundant local use fixture directory not found.');
+    }
+
+    $reader = new PestConfigReader([], new PestFileDiscoverer([$fixtureDir]));
+    $bindings = $reader->resolveGlobalUses($fixtureDir . '/Feature/uses.php');
+
+    expect(array_column($bindings, 'class'))
+        ->toContain(RefreshDatabase::class)
+        ->not->toContain(DynamicTrait::class);
 });
