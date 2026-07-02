@@ -108,7 +108,7 @@ final class PestConfigReader
         $pestFileDir = dirname($filePath);
 
         $this->extractUsesBindings($nodeFinder, $stmts, $pestFileDir);
-        $this->extractPestExtendBindings($nodeFinder, $stmts, $pestFileDir, $filePath);
+        $this->extractPestBindings($nodeFinder, $stmts, $pestFileDir, $filePath);
     }
 
     /**
@@ -155,7 +155,7 @@ final class PestConfigReader
      *
      * @param  Node[]  $stmts
      */
-    private function extractPestExtendBindings(NodeFinder $nodeFinder, array $stmts, string $pestFileDir, string $pestFile): void
+    private function extractPestBindings(NodeFinder $nodeFinder, array $stmts, string $pestFileDir, string $pestFile): void
     {
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
@@ -164,15 +164,18 @@ final class PestConfigReader
                 continue;
             }
 
-            $classNames = $this->resolvePestExtendClassNames($methodCall->var);
-            if ($classNames === []) {
+            $pestBindings = $this->resolvePestClassNames($methodCall->var);
+            if ($pestBindings === null) {
                 continue;
             }
 
-            $this->registerDirectoryBindings($classNames, $methodCall, $pestFileDir);
+            $classNames = [...$pestBindings['extend'], ...$pestBindings['use']];
+            if ($classNames !== []) {
+                $this->registerDirectoryBindings($classNames, $methodCall, $pestFileDir);
+            }
 
-            if ($this->isPestUseChain($methodCall->var)) {
-                $this->registerGlobalUseBindings($classNames, $methodCall, $pestFileDir, $pestFile);
+            if ($pestBindings['use'] !== []) {
+                $this->registerGlobalUseBindings($pestBindings['use'], $methodCall, $pestFileDir, $pestFile);
             }
         }
 
@@ -215,21 +218,32 @@ final class PestConfigReader
     }
 
     /**
-     * Walks up pest()->extend(X::class)->...->in() or pest()->use(X::class)->...->in() chain.
+     * Walks a chain rooted at pest() and keeps extend() and use() classes separate.
      *
-     * @return list<string>
+     * @return array{extend: list<string>, use: list<string>}|null
      */
-    private function resolvePestExtendClassNames(Expr $expr): array
+    private function resolvePestClassNames(Expr $expr): ?array
     {
-        if ($expr instanceof MethodCall && $this->isPestExtendOrUseMethod($expr) && $this->isPestFuncCall($expr->var)) {
-            return $this->extractAllClassArgs($expr);
+        if ($this->isPestFuncCall($expr)) {
+            return ['extend' => [], 'use' => []];
         }
 
-        if ($expr instanceof MethodCall) {
-            return $this->resolvePestExtendClassNames($expr->var);
+        if (! $expr instanceof MethodCall) {
+            return null;
         }
 
-        return [];
+        $bindings = $this->resolvePestClassNames($expr->var);
+        if ($bindings === null) {
+            return null;
+        }
+
+        if ($this->fileDiscoverer->isMethodNamed($expr, 'extend')) {
+            array_push($bindings['extend'], ...$this->extractAllClassArgs($expr));
+        } elseif ($this->fileDiscoverer->isMethodNamed($expr, 'use')) {
+            array_push($bindings['use'], ...$this->extractAllClassArgs($expr));
+        }
+
+        return $bindings;
     }
 
     private function isPestExtendOrUseMethod(MethodCall $methodCall): bool
@@ -239,15 +253,6 @@ final class PestConfigReader
         }
 
         return $this->fileDiscoverer->isMethodNamed($methodCall, 'use');
-    }
-
-    private function isPestUseChain(Expr $expr): bool
-    {
-        if ($expr instanceof MethodCall && $this->fileDiscoverer->isMethodNamed($expr, 'use') && $this->isPestFuncCall($expr->var)) {
-            return true;
-        }
-
-        return $expr instanceof MethodCall && $this->isPestUseChain($expr->var);
     }
 
     private function isPestFuncCall(Expr $expr): bool

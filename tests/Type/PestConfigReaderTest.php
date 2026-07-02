@@ -77,5 +77,8 @@ test('resolves statically known global uses and skips dynamic paths', function (
 
     expect(array_column($bindings, 'class'))
         ->toContain(RefreshDatabase::class)
-        ->not->toContain(DynamicTrait::class);
+        ->not->toContain(CustomTestCase::class)
+        ->not->toContain(DynamicTrait::class)
+        ->and($reader->resolveBindings($fixtureDir . '/Feature/uses.php'))->toContain(CustomTestCase::class)
+        ->toContain(RefreshDatabase::class);
 });

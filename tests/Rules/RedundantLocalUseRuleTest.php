@@ -42,13 +42,17 @@ test('redundant local pest use trait is reported', function (): void {
     ]);
 });
 
-test('only redundant items in a multi-trait declaration are reported', function (): void {
+test('chained extend and use reports only the globally used item in a multi-class declaration', function (): void {
     $this->analyse([__DIR__ . '/data/redundant-local-use/Feature/multiple.php'], [
         [
             'RefreshDatabase is already applied globally through tests/Rules/data/redundant-local-use/Pest.php for this test file.',
-            9,
+            11,
         ],
     ]);
+});
+
+test('globally extended class is not treated as a redundant local use', function (): void {
+    $this->analyse([__DIR__ . '/data/redundant-local-use/Feature/extend.php'], []);
 });
 
 test('file outside global path is not reported', function (): void {
