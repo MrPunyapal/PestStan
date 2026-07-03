@@ -90,7 +90,7 @@ final class RedundantLocalUseRule implements Rule
     {
         return $expr instanceof MethodCall
             && $expr->name instanceof Identifier
-            && strtolower($expr->name->toString()) === 'use'
+            && in_array(strtolower($expr->name->toString()), ['use', 'uses'], true)
             && $expr->var instanceof FuncCall
             && $expr->var->name instanceof Name
             && strtolower($expr->var->name->toString()) === 'pest';
