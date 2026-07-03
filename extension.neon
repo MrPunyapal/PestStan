@@ -115,3 +115,4 @@ rules:
     - PestStan\Rules\BeforeAllThisUsageRule
     - PestStan\Rules\DescribeWithoutTestsRule
     - PestStan\Rules\InvalidGroupNameRule
+    - PestStan\Rules\RedundantLocalUseRule
