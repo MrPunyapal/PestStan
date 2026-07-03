@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.11 - 2026-07-03
+
+### What's Changed
+
+* feat: report-redundant-pest-uses by @MrPunyapal in https://github.com/MrPunyapal/PestStan/pull/30
+
+**Full Changelog**: https://github.com/MrPunyapal/PestStan/compare/0.2.10...0.2.11
+
 ## 0.2.10 - 2026-05-10
 
 ### What's Changed
