@@ -64,12 +64,34 @@ test('globally extended class is not treated as a redundant local use', function
     $this->analyse([__DIR__ . '/data/redundant-local-use/Feature/extend.php'], []);
 });
 
+test('global plural uses reports its class but not the plural extends class', function (): void {
+    $this->analyse([__DIR__ . '/data/redundant-local-use/PluralFeature/multiple.php'], [
+        [
+            'OtherTrait is already applied globally through tests/Rules/data/redundant-local-use/Pest.php for this test file.',
+            10,
+        ],
+    ]);
+});
+
+test('global standalone uses with a static path is supported', function (): void {
+    $this->analyse([__DIR__ . '/data/redundant-local-use/StandaloneFeature/uses.php'], [
+        [
+            'DynamicTrait is already applied globally through tests/Rules/data/redundant-local-use/Pest.php for this test file.',
+            7,
+        ],
+    ]);
+});
+
 test('file outside global path is not reported', function (): void {
     $this->analyse([__DIR__ . '/data/redundant-local-use/Unit/outside.php'], []);
 });
 
-test('dynamic global in path is skipped', function (): void {
+test('dynamic computed and unknown global in paths are skipped', function (): void {
     $this->analyse([__DIR__ . '/data/redundant-local-use/Feature/dynamic-in.php'], []);
+});
+
+test('an in path list containing a dynamic item is skipped entirely', function (): void {
+    $this->analyse([__DIR__ . '/data/redundant-local-use/Feature/mixed-dynamic-in.php'], []);
 });
 
 test('dynamic local use is skipped', function (): void {

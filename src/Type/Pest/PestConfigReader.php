@@ -7,7 +7,6 @@ namespace PestStan\Type\Pest;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ClassConstFetch;
-use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
@@ -16,7 +15,7 @@ use PhpParser\Node\Scalar\String_;
 use PhpParser\NodeFinder;
 
 /**
- * Parses Pest.php config files to resolve which TestCase class is bound via uses(), pest()->extend(), or pest()->use().
+ * Parses Pest.php files to resolve effective class/trait bindings and global use-only bindings.
  */
 final class PestConfigReader
 {
@@ -37,7 +36,7 @@ final class PestConfigReader
     ) {}
 
     /**
-     * Resolves all classes and traits bound to the given file via uses(), pest()->extend(), or pest()->use().
+     * Resolves all classes and traits bound via uses() or Pest's extend/extends/use/uses methods.
      *
      * @return list<string>
      */
@@ -60,7 +59,9 @@ final class PestConfigReader
     }
 
     /**
-     * Resolves statically known pest()->use(...)->in(...) declarations that cover the given file.
+     * Resolves statically known uses(...)->in(...), pest()->use(...)->in(...), and
+     * pest()->uses(...)->in(...) declarations that cover the given file. Classes from
+     * pest()->extend(...) and pest()->extends(...) are deliberately excluded.
      *
      * @return list<array{class: string, config: string}>
      */
@@ -107,7 +108,7 @@ final class PestConfigReader
         $nodeFinder = new NodeFinder;
         $pestFileDir = dirname($filePath);
 
-        $this->extractUsesBindings($nodeFinder, $stmts, $pestFileDir);
+        $this->extractUsesBindings($nodeFinder, $stmts, $pestFileDir, $filePath);
         $this->extractPestBindings($nodeFinder, $stmts, $pestFileDir, $filePath);
     }
 
@@ -116,7 +117,7 @@ final class PestConfigReader
      *
      * @param  Node[]  $stmts
      */
-    private function extractUsesBindings(NodeFinder $nodeFinder, array $stmts, string $pestFileDir): void
+    private function extractUsesBindings(NodeFinder $nodeFinder, array $stmts, string $pestFileDir, string $pestFile): void
     {
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
@@ -131,6 +132,7 @@ final class PestConfigReader
             }
 
             $this->registerDirectoryBindings($classNames, $methodCall, $pestFileDir);
+            $this->registerGlobalUseBindings($classNames, $methodCall, $pestFileDir, $pestFile);
         }
 
         $funcCalls = $nodeFinder->findInstanceOf($stmts, FuncCall::class);
@@ -151,7 +153,7 @@ final class PestConfigReader
     }
 
     /**
-     * Extracts pest()->extend(TestCase::class)->in(...) and pest()->use(Trait::class)->in(...) bindings.
+     * Extracts effective and use-only bindings from Pest configuration method chains.
      *
      * @param  Node[]  $stmts
      */
@@ -180,7 +182,7 @@ final class PestConfigReader
         }
 
         foreach ($methodCalls as $methodCall) {
-            if (! $this->isPestExtendOrUseMethod($methodCall)) {
+            if (! $this->isPestBindingMethod($methodCall)) {
                 continue;
             }
 
@@ -218,7 +220,7 @@ final class PestConfigReader
     }
 
     /**
-     * Walks a chain rooted at pest() and keeps extend() and use() classes separate.
+     * Walks a chain rooted at pest() and keeps extend/extends and use/uses classes separate.
      *
      * @return array{extend: list<string>, use: list<string>}|null
      */
@@ -237,22 +239,40 @@ final class PestConfigReader
             return null;
         }
 
-        if ($this->fileDiscoverer->isMethodNamed($expr, 'extend')) {
+        if ($this->isPestExtendMethod($expr)) {
             array_push($bindings['extend'], ...$this->extractAllClassArgs($expr));
-        } elseif ($this->fileDiscoverer->isMethodNamed($expr, 'use')) {
+        } elseif ($this->isPestUseMethod($expr)) {
             array_push($bindings['use'], ...$this->extractAllClassArgs($expr));
         }
 
         return $bindings;
     }
 
-    private function isPestExtendOrUseMethod(MethodCall $methodCall): bool
+    private function isPestBindingMethod(MethodCall $methodCall): bool
+    {
+        if ($this->isPestExtendMethod($methodCall)) {
+            return true;
+        }
+
+        return $this->isPestUseMethod($methodCall);
+    }
+
+    private function isPestExtendMethod(MethodCall $methodCall): bool
     {
         if ($this->fileDiscoverer->isMethodNamed($methodCall, 'extend')) {
             return true;
         }
 
-        return $this->fileDiscoverer->isMethodNamed($methodCall, 'use');
+        return $this->fileDiscoverer->isMethodNamed($methodCall, 'extends');
+    }
+
+    private function isPestUseMethod(MethodCall $methodCall): bool
+    {
+        if ($this->fileDiscoverer->isMethodNamed($methodCall, 'use')) {
+            return true;
+        }
+
+        return $this->fileDiscoverer->isMethodNamed($methodCall, 'uses');
     }
 
     private function isPestFuncCall(Expr $expr): bool
@@ -276,17 +296,6 @@ final class PestConfigReader
 
             if ($value instanceof String_) {
                 $directories[] = $value->value;
-
-                continue;
-            }
-
-            if (! $value instanceof ConstFetch) {
-                return null;
-            }
-
-            $name = $value->name->toString();
-            if ($name === '__DIR__') {
-                $directories[] = '.';
 
                 continue;
             }
@@ -411,11 +420,11 @@ final class PestConfigReader
     }
 
     /**
-     * Checks whether a pest()->extend() or pest()->use() MethodCall is part of a chain with ->in().
+     * Checks whether a Pest configuration binding call is part of a chain with ->in().
      *
      * @param  Node[]  $stmts
      */
-    private function isPartOfInChain(MethodCall $extendCall, array $stmts, NodeFinder $nodeFinder): bool
+    private function isPartOfInChain(MethodCall $bindingCall, array $stmts, NodeFinder $nodeFinder): bool
     {
         $methodCalls = $nodeFinder->findInstanceOf($stmts, MethodCall::class);
 
@@ -424,7 +433,7 @@ final class PestConfigReader
                 continue;
             }
 
-            if ($this->chainContainsNode($methodCall->var, $extendCall)) {
+            if ($this->chainContainsNode($methodCall->var, $bindingCall)) {
                 return true;
             }
         }

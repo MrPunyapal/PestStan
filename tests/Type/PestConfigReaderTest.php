@@ -8,6 +8,8 @@ use PestStan\Type\Pest\PestConfigReader;
 use PestStan\Type\Pest\PestFileDiscoverer;
 use RuntimeException;
 use Tests\Rules\Fixtures\DynamicTrait;
+use Tests\Rules\Fixtures\MixedDynamicTrait;
+use Tests\Rules\Fixtures\OtherTrait;
 use Tests\Rules\Fixtures\RefreshDatabase;
 use Tests\Type\Fixtures\CustomTestCase;
 use Tests\Type\Fixtures\HelperTrait;
@@ -79,6 +81,12 @@ test('resolves statically known global uses and skips dynamic paths', function (
         ->toContain(RefreshDatabase::class)
         ->not->toContain(CustomTestCase::class)
         ->not->toContain(DynamicTrait::class)
+        ->not->toContain(MixedDynamicTrait::class)
         ->and($reader->resolveBindings($fixtureDir . '/Feature/uses.php'))->toContain(CustomTestCase::class)
-        ->toContain(RefreshDatabase::class);
+        ->toContain(RefreshDatabase::class)
+        ->and(array_column($reader->resolveGlobalUses($fixtureDir . '/PluralFeature/multiple.php'), 'class'))
+        ->toContain(OtherTrait::class)
+        ->not->toContain(CustomTestCase::class)
+        ->and(array_column($reader->resolveGlobalUses($fixtureDir . '/StandaloneFeature/uses.php'), 'class'))
+        ->toContain(DynamicTrait::class);
 });

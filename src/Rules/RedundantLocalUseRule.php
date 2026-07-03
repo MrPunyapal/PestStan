@@ -20,7 +20,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
- * Reports statically known local Pest traits that are already applied by pest()->use() in Pest.php.
+ * Reports statically known local Pest classes or traits already applied by global use configuration in Pest.php.
  *
  * @implements Rule<CallLike>
  */
@@ -40,7 +40,7 @@ final class RedundantLocalUseRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (! $this->isLocalUsesCall($node) && ! $this->isLocalPestUseCall($node)) {
+        if (! $this->isLocalUsesCall($node) && ! $this->isLocalPestConfigurationUseCall($node)) {
             return [];
         }
 
@@ -86,7 +86,7 @@ final class RedundantLocalUseRule implements Rule
             && strtolower($expr->name->toString()) === 'uses';
     }
 
-    private function isLocalPestUseCall(Expr $expr): bool
+    private function isLocalPestConfigurationUseCall(Expr $expr): bool
     {
         return $expr instanceof MethodCall
             && $expr->name instanceof Identifier
