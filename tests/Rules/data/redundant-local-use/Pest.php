@@ -11,6 +11,9 @@ use Tests\Type\Fixtures\CustomTestCase;
 pest()
     ->extend(CustomTestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(function (): void {
+        // Shared test setup.
+    })
     ->in('Feature');
 
 pest()
