@@ -11,6 +11,7 @@ use PhpParser\Node\Identifier;
 use PHPStan\Analyser\Scope;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
+use WeakMap;
 
 final class ExpectationChainStateResolver
 {
@@ -18,8 +19,8 @@ final class ExpectationChainStateResolver
 
     private readonly ExpectationTypeNarrower $typeNarrower;
 
-    /** @var array<int, ExpectationChainState|null> */
-    private array $stateCache = [];
+    /** @var WeakMap<MethodCall, ExpectationChainState|null> */
+    private readonly WeakMap $stateCache;
 
     public function __construct(
         ?ExpectationMatcherRegistry $matcherRegistry = null,
@@ -27,19 +28,19 @@ final class ExpectationChainStateResolver
     ) {
         $this->matcherRegistry = $matcherRegistry ?? new ExpectationMatcherRegistry;
         $this->typeNarrower = $typeNarrower ?? new ExpectationTypeNarrower;
+        $this->stateCache = new WeakMap;
     }
 
     public function resolve(MethodCall $methodCall, Scope $scope): ?ExpectationChainState
     {
-        $cacheKey = spl_object_id($methodCall);
-
-        if (array_key_exists($cacheKey, $this->stateCache)) {
-            return $this->stateCache[$cacheKey];
+        if ($this->stateCache->offsetExists($methodCall)) {
+            return $this->stateCache->offsetGet($methodCall);
         }
 
-        $this->stateCache[$cacheKey] = $this->resolveState($methodCall, $scope);
+        $state = $this->resolveState($methodCall, $scope);
+        $this->stateCache->offsetSet($methodCall, $state);
 
-        return $this->stateCache[$cacheKey];
+        return $state;
     }
 
     private function resolveState(MethodCall $methodCall, Scope $scope): ?ExpectationChainState
