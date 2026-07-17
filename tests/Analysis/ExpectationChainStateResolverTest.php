@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-namespace Tests\Analysis;
-
 use Pest\Expectation;
 use PestStan\Analysis\Expectation\ExpectationChainStateResolver;
 use PhpParser\Node\Expr\MethodCall;
@@ -16,8 +14,6 @@ use PHPStan\Type\IntegerType;
 use PHPStan\Type\StringType;
 use PHPStan\Type\Type;
 use PHPStan\Type\VerbosityLevel;
-use ReflectionProperty;
-use WeakMap;
 
 /**
  * Regression coverage for the resolver's per-node memoisation.
@@ -28,70 +24,60 @@ use WeakMap;
  * integer-keyed cache would leak a previous file's chain state onto an
  * unrelated node in a later file that happens to reuse the id.
  */
-final class ExpectationChainStateResolverTest extends PHPStanTestCase
+beforeEach(function (): void {
+    PHPStanTestCase::getContainer();
+});
+
+test('it resolves each node from its own scope', function (): void {
+    $resolver = new ExpectationChainStateResolver;
+    $intCall = expectationEachCall();
+    $stringCall = expectationEachCall();
+    $intState = $resolver->resolve($intCall, scopeReturningExpectationOf(new IntegerType, fn (string $class): Scope => $this->createMock($class)));
+    $stringState = $resolver->resolve($stringCall, scopeReturningExpectationOf(new StringType, fn (string $class): Scope => $this->createMock($class)));
+    expect($intState)->not->toBeNull()
+        ->and($stringState)->not->toBeNull()
+        ->and($intState->originalValueType->describe(VerbosityLevel::typeOnly()))->toBe('int')
+        ->and($stringState->originalValueType->describe(VerbosityLevel::typeOnly()))->toBe('string');
+});
+
+test('it evicts cache entries when their node is freed', function (): void {
+    $resolver = new ExpectationChainStateResolver;
+    $cache = cacheOf($resolver);
+    expect($cache)->toBeEmpty();
+    $call = expectationEachCall();
+    $resolver->resolve($call, scopeReturningExpectationOf(new IntegerType, fn (string $class): Scope => $this->createMock($class)));
+    expect($cache)->toHaveCount(1, 'The resolved node should be memoised.');
+    unset($call);
+    expect($cache)->toHaveCount(
+        0,
+        'A freed node must not leave a dangling cache entry keyed by a recyclable id.',
+    );
+});
+
+// --- Helper functions ---
+
+function expectationEachCall(): MethodCall
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-        // Boot the PHPStan container so the reflection provider static accessor
-        // is available to GenericObjectType / ObjectType during resolution.
-        self::getContainer();
-    }
+    return new MethodCall(new Variable('expectation'), new Identifier('each'));
+}
 
-    public function test_it_resolves_each_node_from_its_own_scope(): void
-    {
-        $resolver = new ExpectationChainStateResolver;
-        $intCall = $this->expectationEachCall();
-        $stringCall = $this->expectationEachCall();
-        $intState = $resolver->resolve($intCall, $this->scopeReturningExpectationOf(new IntegerType));
-        $stringState = $resolver->resolve($stringCall, $this->scopeReturningExpectationOf(new StringType));
-        self::assertNotNull($intState);
-        self::assertNotNull($stringState);
-        self::assertSame('int', $intState->originalValueType->describe(VerbosityLevel::typeOnly()));
-        self::assertSame('string', $stringState->originalValueType->describe(VerbosityLevel::typeOnly()));
-    }
+function scopeReturningExpectationOf(Type $valueType, callable $mockFactory): Scope
+{
+    $expectationType = new GenericObjectType(Expectation::class, [$valueType]);
+    $scope = $mockFactory(Scope::class);
+    $scope->method('getType')->willReturn($expectationType);
 
-    public function test_it_evicts_cache_entries_when_their_node_is_freed(): void
-    {
-        $resolver = new ExpectationChainStateResolver;
-        $cache = $this->cacheOf($resolver);
-        self::assertCount(0, $cache);
-        $call = $this->expectationEachCall();
-        $resolver->resolve($call, $this->scopeReturningExpectationOf(new IntegerType));
-        self::assertCount(1, $cache, 'The resolved node should be memoised.');
-        // Freeing the node must release its cache entry, so a later node that
-        // reuses the same spl_object_id cannot inherit a stale chain state.
-        unset($call);
-        self::assertCount(
-            0,
-            $cache,
-            'A freed node must not leave a dangling cache entry keyed by a recyclable id.',
-        );
-    }
+    return $scope;
+}
 
-    private function expectationEachCall(): MethodCall
-    {
-        return new MethodCall(new Variable('expectation'), new Identifier('each'));
-    }
+/**
+ * @return WeakMap<MethodCall, mixed>
+ */
+function cacheOf(ExpectationChainStateResolver $resolver): WeakMap
+{
+    $property = new ReflectionProperty($resolver, 'stateCache');
+    $cache = $property->getValue($resolver);
+    expect($cache)->toBeInstanceOf(WeakMap::class);
 
-    private function scopeReturningExpectationOf(Type $valueType): Scope
-    {
-        $expectationType = new GenericObjectType(Expectation::class, [$valueType]);
-        $scope = $this->createMock(Scope::class);
-        $scope->method('getType')->willReturn($expectationType);
-
-        return $scope;
-    }
-
-    /**
-     * @return WeakMap<MethodCall, mixed>
-     */
-    private function cacheOf(ExpectationChainStateResolver $resolver): WeakMap
-    {
-        $property = new ReflectionProperty($resolver, 'stateCache');
-        $cache = $property->getValue($resolver);
-        self::assertInstanceOf(WeakMap::class, $cache);
-
-        return $cache;
-    }
+    return $cache;
 }
