@@ -151,3 +151,10 @@ test('impossible semantic chains suppress downstream matcher diagnostics', funct
         ],
     ]);
 });
+
+test('regression #32: valid expectations from bool methods, casts, and nullable properties are not falsely flagged', function (): void {
+    $this->analyse([
+        __DIR__ . '/data/impossible-expectation-regression-32-a.php',
+        __DIR__ . '/data/impossible-expectation-regression-32-b.php',
+    ], []);
+});

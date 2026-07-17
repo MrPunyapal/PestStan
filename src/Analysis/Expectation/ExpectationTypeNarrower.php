@@ -11,39 +11,7 @@ use PHPStan\Type\UnionType;
 
 final class ExpectationTypeNarrower
 {
-    /** @var array<string, bool> */
-    private array $overlapCache = [];
-
-    /** @var array<string, Type> */
-    private array $narrowCache = [];
-
     public function hasOverlap(Type $incomingValueType, Type $expectedValueType): bool
-    {
-        $cacheKey = $this->cacheKey($incomingValueType, $expectedValueType);
-
-        if (array_key_exists($cacheKey, $this->overlapCache)) {
-            return $this->overlapCache[$cacheKey];
-        }
-
-        $this->overlapCache[$cacheKey] = $this->computeOverlap($incomingValueType, $expectedValueType);
-
-        return $this->overlapCache[$cacheKey];
-    }
-
-    public function narrow(Type $incomingValueType, Type $expectedValueType): Type
-    {
-        $cacheKey = $this->cacheKey($incomingValueType, $expectedValueType);
-
-        if (array_key_exists($cacheKey, $this->narrowCache)) {
-            return $this->narrowCache[$cacheKey];
-        }
-
-        $this->narrowCache[$cacheKey] = $this->computeNarrow($incomingValueType, $expectedValueType);
-
-        return $this->narrowCache[$cacheKey];
-    }
-
-    private function computeOverlap(Type $incomingValueType, Type $expectedValueType): bool
     {
         if ($incomingValueType instanceof UnionType) {
             foreach ($incomingValueType->getTypes() as $innerType) {
@@ -76,7 +44,7 @@ final class ExpectationTypeNarrower
         return ! TypeCombinator::intersect($incomingValueType, $expectedValueType) instanceof NeverType;
     }
 
-    private function computeNarrow(Type $incomingValueType, Type $expectedValueType): Type
+    public function narrow(Type $incomingValueType, Type $expectedValueType): Type
     {
         if ($expectedValueType->isSuperTypeOf($incomingValueType)->yes()) {
             return $incomingValueType;
@@ -103,11 +71,6 @@ final class ExpectationTypeNarrower
         }
 
         return $this->narrowSingleType($incomingValueType, $expectedValueType);
-    }
-
-    private function cacheKey(Type $incomingValueType, Type $expectedValueType): string
-    {
-        return spl_object_id($incomingValueType) . ':' . spl_object_id($expectedValueType);
     }
 
     private function narrowSingleType(Type $incomingValueType, Type $expectedValueType): Type
