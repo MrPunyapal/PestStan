@@ -127,7 +127,7 @@ final class PestFileDiscoverer
             $directoryIterator = new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS);
             $filterIterator = new RecursiveCallbackFilterIterator(
                 $directoryIterator,
-                static fn (SplFileInfo $current, string $key, RecursiveDirectoryIterator $iterator): bool => ! ($current->isDir() && $current->getFilename() === 'vendor'),
+                static fn (SplFileInfo $current, string $key, RecursiveDirectoryIterator $iterator): bool => ! $current->isDir() || $current->getFilename() !== 'vendor',
             );
             $iterator = new RecursiveIteratorIterator($filterIterator);
         } catch (UnexpectedValueException) {
