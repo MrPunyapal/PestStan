@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.12 - 2026-07-17
+
+### What's Changed
+
+* fix: key expectation chain-state cache by node identity to stop cross-file cache poisoning by @bobbypiperagrovista in https://github.com/MrPunyapal/PestStan/pull/31
+* Fix impossible expectation detection for valid boolean and nullable cases by @MrPunyapal in https://github.com/MrPunyapal/PestStan/pull/33
+
+### New Contributors
+
+* @bobbypiperagrovista made their first contribution in https://github.com/MrPunyapal/PestStan/pull/31
+
+**Full Changelog**: https://github.com/MrPunyapal/PestStan/compare/0.2.11...0.2.12
+
 ## 0.2.11 - 2026-07-03
 
 ### What's Changed
