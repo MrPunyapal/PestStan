@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-// Regression tests for issue #32:
 // These are ALL valid expectation chains. None should be flagged as impossible.
 
 interface BoolPolicy

@@ -2,8 +2,7 @@
 
 declare(strict_types=1);
 
-// Companion fixture for regression test issue #32.
-// Contains different type patterns to exercise cross-file cache interactions.
+// Cross-file cache interaction: basic type expectations that should never be flagged as impossible.
 
 it('string should not be impossible for toBeString', function (): void {
     expect('hello')->toBeString();

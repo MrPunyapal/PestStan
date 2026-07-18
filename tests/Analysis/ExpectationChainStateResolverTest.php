@@ -16,7 +16,7 @@ use PHPStan\Type\Type;
 use PHPStan\Type\VerbosityLevel;
 
 /**
- * Regression coverage for the resolver's per-node memoisation.
+ * Per-node WeakMap memoisation for the resolver's chain-state cache.
  *
  * The resolver is instantiated once by PHPStan's container and shared across
  * every analysed file. Its cache must therefore key on the node identity, not
