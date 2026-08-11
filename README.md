@@ -1,3 +1,6 @@
+# Check official [PHPStan plugin](https://github.com/pestphp/pest-plugin-phpstan)
+
+
 # PestStan
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/mrpunyapal/peststan.svg?style=flat-square)](https://packagist.org/packages/mrpunyapal/peststan)
